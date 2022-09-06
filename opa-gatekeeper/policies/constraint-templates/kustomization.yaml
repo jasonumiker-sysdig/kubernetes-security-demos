@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - psp_host_namespaces.yaml
+  - psp_host_network.yaml
+  - psp_privilege_escalation.yaml
+  - psp_privileged.yaml
+  - psp_users.yaml
+  - psp_volumes.yaml
+namespace: kube-system

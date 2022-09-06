@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-users-disallowed
+  labels:
+    app: nginx-users-disallowed
+spec:
+  containers:
+    - name: nginx
+      image: nginxinc/nginx-unprivileged:1.19
+      ports:
+        - containerPort: 8080
+          protocol: TCP
+      securityContext:
+        allowPrivilegeEscalation: false
