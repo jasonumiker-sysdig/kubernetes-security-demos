@@ -23,4 +23,6 @@ echo "- name: john" >> ~/.kube/config
 echo "  user:" >> ~/.kube/config
 echo "    token: "$JOHN_TOKEN >> ~/.kube/config
 
-# Now copy and paste known_tokens.csv to the bottom of /var/snap/microk8s/current/credentials/known_tokens.csv
+multipass transfer known_tokens.csv install_known_tokens.sh microk8s-vm:/home/ubuntu
+multipass exec microk8s-vm -- chmod +x ./install_known_tokens.sh
+multipass exec microk8s-vm -- sudo ./install_known_tokens.sh
