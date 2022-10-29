@@ -43,3 +43,5 @@ microk8s config > ~/.kube/config
 
 # Set up multi-tenancy
 ./setup-multitenant.sh
+
+# Enable auditing
