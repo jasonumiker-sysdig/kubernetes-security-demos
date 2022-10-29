@@ -1,2 +1,4 @@
 *.token
 known_tokens.csv
+kube-apiserver
+webhook-config.yaml
