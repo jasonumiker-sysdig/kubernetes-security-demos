@@ -25,4 +25,7 @@ echo "    token: "$JOHN_TOKEN >> ~/.kube/config
 
 multipass transfer known_tokens.csv install_known_tokens.sh microk8s-vm:/home/ubuntu
 multipass exec microk8s-vm -- chmod +x ./install_known_tokens.sh
+multipass exec microk8s-vm -- sudo apt update
+multipass exec microk8s-vm -- sudo apt install dos2unix -y
+multipass exec microk8s-vm -- dos2unix ./install_known_tokens.sh
 multipass exec microk8s-vm -- sudo ./install_known_tokens.sh
