@@ -16,6 +16,7 @@ services:
         protocol: TCP
 
 falco:
+  json_output: true
   rules_file:
     - /etc/falco/k8s_audit_rules.yaml
     - /etc/falco/rules.d

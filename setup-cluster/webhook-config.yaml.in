@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Config
 clusters:
-- name: falco
+- name: microk8s-cluster
   cluster:
-    server: http://$AGENT_SERVICE_CLUSTERIP:9765/k8s_audit
+    server: http://$AGENT_SERVICE_CLUSTERIP:9765/k8s-audit
 contexts:
 - context:
-    cluster: falco
+    cluster: microk8s-cluster
     user: ""
   name: default-context
 current-context: default-context
