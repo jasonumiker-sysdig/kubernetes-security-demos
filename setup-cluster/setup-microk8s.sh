@@ -37,7 +37,7 @@ microk8s config > /root/.kube/config
 
 # Set up multi-tenancy
 ./setup-multitenant.sh
-mkdir /ubuntu/.kube/
+mkdir /home/ubuntu/.kube/
 cp /root/.kube/config /home/ubuntu/.kube/config
 chown ubuntu:ubuntu /home/ubuntu/.kube/config
 

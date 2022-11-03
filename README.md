@@ -2,7 +2,7 @@
 
 ## Pre-requisistes
 
-Mac (assumes M1/ARM at the moment):
+Mac (assumes M1/M2/ARM at the moment):
 * Install microk8s with a `brew install microk8s kubectl helm`
 * Run setup-cluster/setup-microk8s-vm-mac.sh
 
@@ -12,6 +12,11 @@ Windows:
 * Install git - https://gitforwindows.org/
 * Install the kubectl (https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/) and helm (https://helm.sh/docs/intro/install/) CLIs
 * Run setup-cluster/setup-microk8s-vm-win.sh from within a git bash shell/session
+
+Ubuntu:
+* Clone this repo - `git clone https://github.com/jasonumiker-sysdig/kubernetes-opensouce-security-demos.git`
+* Change into the setup directory - `cd kubernetes-opensource-security-demos/setup-cluster`
+* Run the setup script - `sudo ./setup-microk8s.sh`
 
 TODO: Set up AWS automation
 
