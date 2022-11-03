@@ -2,7 +2,7 @@
 
 ## Pre-requisistes
 
-Mac:
+Mac (assumes M1/ARM at the moment):
 * Install microk8s with a `brew install microk8s kubectl helm`
 * Run setup-cluster/setup-microk8s-vm-mac.sh
 
@@ -19,7 +19,7 @@ TODO: Set up AWS automation
 1. `kubectl get pods -A` - We are currently signed in as the admin ClusterRole - we can do anything cluster-wide
 1. `cat team1.yaml` - Here we're creating a new namesapce, team1, and then creating the most basic and powerful Role possible that can do anything within that Namespace with *'s for apiGroups, Resources and Verbs. Like we said this is not a great idea especially on the verbs. Then finally we're binding that new Role to a user named Jane.
 1. `kubectl api-resources` this shows all the different resources that we can control the use of in our RBAC
-1. `kubectl get clusterrole admin -o yaml` - And we can ask for details on the few built-in ClusterRoles we can use as a guide. This admin role is intended to be for privileged users but not ones who can do anything. As you can see, the minute you don't do *s there is quite alot of YAML here.
+1. `kubectl get clusterrole admin -o yaml | less` - And we can ask for details on the few built-in ClusterRoles we can use as a guide. This admin role is intended to be for privileged users but not ones who can do anything. As you can see, the minute you don't do *s there is quite alot of YAML here.
 1. `kubectl get clusterrole admin -o yaml | wc -l` - 324 lines of it!
 1. But, we're much better than nothing doing a Role binding this user into a Namespace than a ClusterRole!
 1. We have that team1 you saw as well as another similar Namespace and Role called Team2 - let's apply them
