@@ -82,7 +82,8 @@ spec:
 
       # Define container properties
       containers:
-      - image: gcr.io/google-samples/hello-app:1.0
+      #- image: gcr.io/google-samples/hello-app:latest
+      - image: jasonumiker/hello-app:latest
         name: hello-server
 
         # Describes the ports exposed on the service

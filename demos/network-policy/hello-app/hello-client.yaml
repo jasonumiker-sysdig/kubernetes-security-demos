@@ -25,6 +25,16 @@
 #   for the hello-server service defined in the network policy. Once the network policy
 #   is enabled, the pod will lose access to the service.
 
+#hello-secret secret
+apiVersion: v1
+data:
+  API_KEY: c3VwZXJzZWNyZXRhcGlrZXk=
+kind: Secret
+metadata:
+  name: hello-secret
+type: Opaque
+
+---
 # hello-client-allowed deployment
 apiVersion: apps/v1
 kind: Deployment
@@ -75,10 +85,12 @@ spec:
           # Prevents the container from writing to its filesystem
           readOnlyRootFilesystem: true
 
-        # Dummy password we can see when we crictl ps into the container
         env:
-        - name: PASSWORD
-          value: "Password123"
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: hello-secret
+              key: API_KEY     
 
 ---
 # hello-client-blocked deployment
@@ -133,5 +145,8 @@ spec:
           readOnlyRootFilesystem: true
 
         env:
-        - name: PASSWORD
-          value: "Password123"
+        - name: API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: hello-secret
+              key: API_KEY           
