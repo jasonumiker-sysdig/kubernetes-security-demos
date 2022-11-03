@@ -26,11 +26,8 @@ rm -f crictl-v1.24.1-linux-arm64.tar.gz
 echo "runtime-endpoint: unix:///var/snap/microk8s/common/run/containerd.sock" > /etc/crictl.yaml
 
 # Set up the kubeconfig
-mkdir /home/ubuntu/.kube
 mkdir /root/.kube
-microk8s config > /home/ubuntu/.kube/config
 microk8s config > /root/.kube/config
-chown ubuntu:ubuntu /home/ubuntu/.kube/config
 
 # Install Elasticsearch (in place of Falcosidekick UI on Mac)
 #./install-elasticsearch.sh
@@ -39,7 +36,10 @@ chown ubuntu:ubuntu /home/ubuntu/.kube/config
 ./install-falco.sh
 
 # Set up multi-tenancy
-#./setup-multitenant.sh
+./setup-multitenant.sh
+mkdir /ubuntu/.kube/
+cp /root/.kube/config /home/ubuntu/.kube/config
+chown ubuntu:ubuntu /home/ubuntu/.kube/config
 
 # Enable auditing
 #curl https://raw.githubusercontent.com/draios/sysdig-cloud-scripts/master/k8s_audit_config/audit-policy-v2.yaml > audit-policy.yaml
