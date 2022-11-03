@@ -42,7 +42,7 @@ multipass transfer ~/.kube/config microk8s-vm:/home/ubuntu/.kube
 ./install-elasticsearch.sh
 
 # Install Falco
-./install-falco.sh
+./install-falco-mac.sh
 
 # Set up multi-tenancy
 ./setup-multitenant-vm.sh
