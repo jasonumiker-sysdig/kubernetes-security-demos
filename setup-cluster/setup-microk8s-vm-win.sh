@@ -5,13 +5,14 @@ multipass delete microk8s-vm
 multipass purge
 
 # Provision your local cluster VM
-multipass launch --cpus 6 --mem 16G --disk 50G --name microk8s-vm
+multipass launch --cpus 2 --mem 4G --disk 20G --name microk8s-vm
 
 # Install microk8s on it
 multipass exec microk8s-vm -- sudo snap install microk8s --channel=1.24/stable --classic
 
-# Enable CoreDNS, RBAC, hostpath-storage and Prometheus
-multipass exec microk8s-vm -- sudo microk8s enable dns rbac hostpath-storage prometheus
+# Enable CoreDNS, RBAC and hostpath-storage
+#multipass exec microk8s-vm -- sudo microk8s enable dns rbac hostpath-storage prometheus
+multipass exec microk8s-vm -- sudo microk8s enable dns rbac hostpath-storage
 multipass exec microk8s-vm -- sudo microk8s status --wait-ready
 
 # Enable ubuntu user to manage microk8s
@@ -37,14 +38,14 @@ microk8s config > ~/.kube/config
 multipass exec microk8s-vm -- mkdir //home/ubuntu/.kube
 multipass transfer ~/.kube/config microk8s-vm:/home/ubuntu/.kube
 
-# Install Elasticsearch
-./install-elasticsearch.sh
+# Install Elasticsearch (in place of Falcosidekick UI on Mac)
+#./install-elasticsearch.sh
 
 # Install Falco
 ./install-falco-win.sh
 
 # Set up multi-tenancy
-./setup-multitenant.sh
+./setup-multitenant-vm.sh
 
 # Enable auditing
 #curl https://raw.githubusercontent.com/draios/sysdig-cloud-scripts/master/k8s_audit_config/audit-policy-v2.yaml > audit-policy.yaml

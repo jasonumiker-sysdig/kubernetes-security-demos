@@ -69,7 +69,9 @@ Finally we had one more tool in our cluster all along here - Falco! That has bee
 
 There are actually two Falcos running - one watching the Linux kernel syscalls on each Node as a Daemonset and one watching the Kubernetes audit trail as a Deployment. All of their events are aggregated by Falco Sidekick which can fan them out to any number of destinations such as your SIEM, your alerting systems like Pagerduty or your messaging tools like Slack.
 
-1. Open Falcosidekick UI - TODO: Instructions on how to do this NodePort and/or AWS
+1. Open Falcosidekick UI by going to port 30282 on your Node
+    1. If using microk8s on a Mac or Windows machine this is the first IP listed when you run `multipass list` for microk8s-vm (the one that starts with 172.)
+    1. If run in AWS then this will be the public IP of the EC2 instance
 1. Go to the Events Tab
 1. Type `nsenter` in the search box and note the rules triggered on both the Kubernetes audit trail as well as the Node syscalls including `Create Privileged Pod`, `Launch Privileged Container` and `Attach/Exec Pod`
 1. Then type `terminal` in the search box and see the Terminal shell in container events. These were triggered when we ran crictl exec on the host after we escaped there from the Pod.
