@@ -1,0 +1,14 @@
+collectors:
+  containerd:
+    socket: //var/snap/microk8s/common/run/containerd.sock
+driver:
+  kind: ebpf
+falco:
+  json_output: true
+falcosidekick:
+  enabled: true
+  webui:
+    enabled: true
+  elasticsearch:
+    hostport: "http://elasticsearch-master.monitoring.svc.cluster.local:9200"
+tty: true
