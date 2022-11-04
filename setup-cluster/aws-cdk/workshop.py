@@ -65,6 +65,12 @@ class AttendeeStack(Stack):
             allow_all_outbound=True
         )
 
+        jumpbox_security_group.add_ingress_rule(
+            ec2.Peer.any_ipv4(),
+            ec2.Port.tcp(30282),
+            "Allow FalcosidekickUI"
+        )
+
         # Get the Ubuntu machine image
         ubuntu_machine_image=ec2.MachineImage.from_ssm_parameter(
             parameter_name="/aws/service/canonical/ubuntu/server/focal/stable/current/amd64/hvm/ebs-gp2/ami-id",
@@ -88,7 +94,8 @@ class AttendeeStack(Stack):
         jumpbox_instance.user_data.add_commands(
             "cd /root",
             "git clone https://github.com/jasonumiker-sysdig/kubernetes-opensouce-security-demos",
-            "cd /root/kubernetes-opensouce-security-demos/setup-cluster"
+            "cd /root/kubernetes-opensouce-security-demos/setup-cluster",
+            "./setup-microk8s.sh"
         )
 
         # Create an Attendee User
