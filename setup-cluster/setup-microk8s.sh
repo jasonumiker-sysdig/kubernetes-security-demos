@@ -9,10 +9,6 @@ snap install microk8s --channel=1.24/stable --classic
 microk8s enable dns rbac hostpath-storage
 microk8s status --wait-ready
 
-# Enable ubuntu user to manage microk8s
-usermod -a -G microk8s ubuntu
-chown -f -R ubuntu ~/.kube
-
 # Install kubectl in microk8s-vm
 snap install kubectl --classic
 
@@ -27,7 +23,7 @@ echo "runtime-endpoint: unix:///var/snap/microk8s/common/run/containerd.sock" > 
 
 # Set up the kubeconfig
 mkdir /root/.kube
-microk8s config > /root/.kube/config
+microk8s.config | cat - > /root/.kube/config
 
 # Install Elasticsearch (in place of Falcosidekick UI on Mac)
 #./install-elasticsearch.sh
