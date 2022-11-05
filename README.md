@@ -19,8 +19,8 @@ Ubuntu:
 1. Run the setup script - `sudo ./setup-microk8s.sh`
 
 AWS:
-1. Install node.js, npm, python3 and pip3
-    1. Mac - `brew install node
+1. Install node.js, npm, python3, pip3 and the AWS CLI 
+    1. Mac - `brew install node@16 python@3.9 awscli`
 1. cd `setup-cluster/aws-cdk`
 1. Edit cdk.json and enter the AWS account number, region and the number of attendees that you'd like
 1. Run `npm install`
