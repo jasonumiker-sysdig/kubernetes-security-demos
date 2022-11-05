@@ -75,6 +75,7 @@ So, that was a very quick overview of how to configure multi-tenancy of Kubernet
 
 So even though we properly set up our Kubernetes RBAC and Namespaces this host-level container isolation let us down as people who can launch a pod in one namespace with those defaults can 'own' the Node and everything running on it - even if those things are from a different Namespace.
 
+### Open Policy Agent (OPA) Gatekeeper
 The answer to this problem is the OPA Gatekeeper admission controller preventing me asking for those insecure parameters in my nsenter Podspec. This isn't there by default though in most clusters - even things like AWS EKS, Google GKE or MS AKS. Though in some you can opt-in to them. One way or the other if you are doing multi-tenancy you need to ensure you have it.
 
 1. `cd opa-gatekeeper`
@@ -85,8 +86,15 @@ The answer to this problem is the OPA Gatekeeper admission controller preventing
 1. `./install-gatekeeper.sh` - there we go
 1. `cd ..` - Okay now lets try our nsenter again
 1. `./nsenter.sh` - As you can see we now have OPA Gatekeeper policies blocking all the insecure options nsenter was asking for - so that Pod is no longer allowed to launch. I am protected by this new admission controller!
-1. `cd opa-gatekeeper`, `./uninstall-gatekeeper.sh` - removing this for a future demo though
+1. `cd opa-gatekeeper/contraint-templates` then `cat` the various files in here to look at the policies (called contraint-templates) that made that possible
+1. `cd ../constraints` then `cat the various files in here - the constraints which say where to apply and where not to apply the contraint-tempaltes/policies
+1. `cd ..`, `./uninstall-gatekeeper.sh` - removing Gatekeeper for a future demo to work though
 
+These actually came from the Gatekeeper library on Github where there are a number of additional examples here - https://github.com/open-policy-agent/gatekeeper-library/tree/master/library
+
+Also there is a good tool to test out your Rego (OPA's declarative language for policies) here - https://play.openpolicyagent.org/
+
+### Falco
 Finally we had one more tool in our cluster all along here - Falco! That has been watching all this suspicious behavior.
 
 There are actually two Falcos running - one watching the Linux kernel syscalls on each Node as a Daemonset and one watching the Kubernetes audit trail as a Deployment. All of their events are aggregated by Falco Sidekick which can fan them out to any number of destinations such as your SIEM, your alerting systems like Pagerduty or your messaging tools like Slack.
