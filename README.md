@@ -3,22 +3,39 @@
 ## Pre-requisistes
 
 Mac (assumes M1/M2/ARM at the moment):
-* Install microk8s with a `brew install microk8s kubectl helm`
-* Run setup-cluster/setup-microk8s-vm-mac.sh
+1. Install microk8s with a `brew install microk8s kubectl helm`
+1. Run setup-cluster/setup-microk8s-vm-mac.sh
 
 Windows:
-* Be running a Pro or Enterprise version of Windows 10/11 that can do Hyper-V
-* Install microk8s - https://microk8s.io/docs/install-windows
-* Install git - https://gitforwindows.org/
-* Install the kubectl (https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/) and helm (https://helm.sh/docs/intro/install/) CLIs
-* Run setup-cluster/setup-microk8s-vm-win.sh from within a git bash shell/session
+1. Be running a Pro or Enterprise version of Windows 10/11 that can do Hyper-V
+1. Install microk8s - https://microk8s.io/docs/install-windows
+1. Install git - https://gitforwindows.org/
+1. Install the kubectl (https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/) and helm (https://helm.sh/docs/intro/install/) CLIs
+1. Run setup-cluster/setup-microk8s-vm-win.sh from within a git bash shell/session
 
 Ubuntu:
-* Clone this repo - `git clone https://github.com/jasonumiker-sysdig/kubernetes-opensouce-security-demos.git`
-* Change into the setup directory - `cd kubernetes-opensource-security-demos/setup-cluster`
-* Run the setup script - `sudo ./setup-microk8s.sh`
+1. Clone this repo - `git clone https://github.com/jasonumiker-sysdig/kubernetes-opensouce-security-demos.git`
+1. Change into the setup directory - `cd kubernetes-opensource-security-demos/setup-cluster`
+1. Run the setup script - `sudo ./setup-microk8s.sh`
 
-TODO: Set up AWS automation
+AWS:
+1. Install node.js, npm, python3 and pip3
+    1. Mac - `brew install node
+1. cd `setup-cluster/aws-cdk`
+1. Edit cdk.json and enter the AWS account number, region and the number of attendees that you'd like
+1. Run `npm install`
+1. Run `pip3 install -r requirements.txt`
+1. Run `npx cdk bootstrap` (once per account)
+1. Run `npx cdk deploy --all`
+1. Set the passwords on all the attendee IAM Users so they can sign into the console - then provide the AWS Account #, IAM username and password to the attendees
+
+## Signing in as an attendee if the environment is in AWS
+1. Go to https://console.aws.amazon.com/
+1. Choose IAM User and enter the AWS Account Number as well as the Attendee IAM Username and Password the facilitator will provide
+1. Go to the EC2 Console
+1. Tick the box next to the instance named the same as your username and then click the Connect button
+1. Pick the Session Manager tab then click the Connect button
+1. `sudo bash` then `cd ~` as all the tooling was installed for the root user
 
 ## Kubernetes Namespace and RBAC Demo
 1. `kubectl get pods -A` - We are currently signed in as the admin ClusterRole - we can do anything cluster-wide
