@@ -112,6 +112,8 @@ Falco's default rules are a good start but, as you can see, require some tuning 
 
 There is a great Falco 101 training on more details available here - https://learn.sysdig.com/falco-101
 
+It is also worth nothing that, in addition to the additional privileges we gave nsenter in the Kubernetes parameters, running as the root user within the container was required for this escape to work. Between having Falco alert on that when it happens (which as you can see it does by default with the rules in the Helm chart), as well as perhaps having OPA Gatekeeker block that so it isn't even possible, it is a good idea generally to get all of your containers running both as non-root and without privileges. 
+
 ## NetworkPolicy Demo
 
 Now let's look at how NetworkPolicies work and how to isolate network traffic within our cluster(s).
