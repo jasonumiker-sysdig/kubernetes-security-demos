@@ -67,7 +67,7 @@ So, that was a very quick overview of how to configure multi-tenancy of Kubernet
 1. `./nsenter.sh` - and there we go - root@microk8s-vm which is our Kubernetes Node
 1. `ps aux` - when you are root in the host's Linux namespace you can see all the processes in all the containers
 1. `crictl ps` - worse than that I can connect to the container runtime that Kubernetes manages and bypass Kubernetes to control it directly with crictl
-1. `crictl ps | grep hello-client-allowed` - There is a password environment variable as part of Jane's workload in team1. Lets interactively connect into it!
+1. `crictl ps | grep hello-client-allowed` - There is an API_KEY secret as part of Jane's workload in team1. Lets interactively connect into it!
 1. `crictl exec -it (copy/paste ID) /bin/sh` And now I am in that container interactively
 1. `set | grep API_KEY` and, since secrets are decrypted into the running containers as environment variables or files I can see those - even from things from other Kubernetes Namespaces
 1. `exit` to leave the container
