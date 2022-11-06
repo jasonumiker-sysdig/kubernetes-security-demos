@@ -2,7 +2,7 @@
 
 ## Pre-requisistes
 
-Mac (assumes M1/M2/ARM at the moment):
+Mac:
 1. Install microk8s with a `brew install microk8s kubectl helm`
 1. Run setup-cluster/setup-microk8s-vm-mac.sh
 
