@@ -87,7 +87,7 @@ The answer to this problem is the OPA Gatekeeper admission controller preventing
 1. `cd ..` - Okay now lets try our nsenter again
 1. `./nsenter.sh` - As you can see we now have OPA Gatekeeper policies blocking all the insecure options nsenter was asking for - so that Pod is no longer allowed to launch. I am protected by this new admission controller!
 1. `cd opa-gatekeeper/contraint-templates` then `cat` the various files in here to look at the policies (called contraint-templates) that made that possible
-1. `cd ../constraints` then `cat the various files in here - the constraints which say where to apply and where not to apply the contraint-tempaltes/policies
+1. `cd ../constraints` then `cat` the various files in here - the constraints which say where to apply and where not to apply the contraint-tempaltes/policies
 1. `cd ..`, `./uninstall-gatekeeper.sh` - removing Gatekeeper for a future demo to work though
 
 These actually came from the Gatekeeper library on Github where there are a number of additional examples here - https://github.com/open-policy-agent/gatekeeper-library/tree/master/library
