@@ -112,7 +112,13 @@ Falco's default rules are a good start but, as you can see, require some tuning 
 
 There is a great Falco 101 training on more details available here - https://learn.sysdig.com/falco-101
 
+### Running containers as non-root
+
 It is also worth nothing that, in addition to the additional privileges we gave nsenter in the Kubernetes parameters, running as the root user within the container was required for this escape to work. Between having Falco alert on that when it happens (which as you can see it does by default with the rules in the Helm chart), as well as perhaps having OPA Gatekeeker block that so it isn't even possible, it is a good idea generally to get all of your containers running both as non-root and without privileges. 
+
+This change to non-root often requires rebuilding your container with a new Dockerfile. A good example of the difference in Dockerfiles required to do it is nginx vs. nginx-unprivileged. By default nginx wants to us port 80 and so runs as root in order to be able to do so. But they also build a version of it that doesn't and uses 8080 intead:
+* nginx Dockerfile that runs as root - https://github.com/nginxinc/docker-nginx/blob/fef51235521d1cdf8b05d8cb1378a526d2abf421/mainline/debian/Dockerfile
+* nginx Dockerfile that creates a nginx user/group (UID and GID 101) and uses that instead - https://github.com/nginxinc/docker-nginx-unprivileged/blob/main/Dockerfile-debian.template
 
 ## NetworkPolicy Demo
 
