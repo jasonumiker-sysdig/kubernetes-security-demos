@@ -1,5 +1,7 @@
 # Kubernetes open-source security demos
 
+This blog post demos the topics discussed my recent blog post - https://sysdig.com/blog/multi-tenant-isolation-boundaries-kubernetes/
+
 ## Pre-requisistes
 
 Mac:
