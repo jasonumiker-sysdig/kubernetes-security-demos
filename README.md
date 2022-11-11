@@ -2,7 +2,7 @@
 
 This blog post demos the topics discussed my recent blog post - https://sysdig.com/blog/multi-tenant-isolation-boundaries-kubernetes/
 
-## Pre-requisistes
+## Pre-requisites
 
 Mac:
 1. Install microk8s with a `brew install microk8s kubectl helm`
@@ -43,15 +43,15 @@ AWS:
 
 ## Kubernetes Namespace and RBAC Demo
 1. `kubectl get pods -A` - We are currently signed in as the admin ClusterRole - we can do anything cluster-wide
-1. `cat team1.yaml` - Here we're creating a new namesapce, team1, and then creating the most basic and powerful Role possible that can do anything within that Namespace with *'s for apiGroups, Resources and Verbs. Like we said this is not a great idea especially on the verbs. Then finally we're binding that new Role to a user named Jane.
+1. `cat team1.yaml` - Here we're creating a new namespace, team1, and then creating the most basic and powerful Role possible that can do anything within that Namespace with *'s for apiGroups, Resources and Verbs. Like we said this is not a great idea especially on the verbs. Then finally we're binding that new Role to a user named Jane.
 1. `kubectl api-resources` this shows all the different resources that we can control the use of in our RBAC
-1. `kubectl get clusterrole admin -o yaml | less` - And we can ask for details on the few built-in ClusterRoles we can use as a guide. This admin role is intended to be for privileged users but not ones who can do anything. As you can see, the minute you don't do *s there is quite alot of YAML here.
+1. `kubectl get clusterrole admin -o yaml | less` - And we can ask for details on the few built-in ClusterRoles we can use as a guide. This admin role is intended to be for privileged users but not ones who can do anything. As you can see, the minute you don't do *s there is quite a lot of YAML here.
 1. `kubectl get clusterrole admin -o yaml | wc -l` - 324 lines of it!
 1. But, we're much better than nothing doing a Role binding this user into a Namespace than a ClusterRole!
 1. We have that team1 you saw as well as another similar Namespace and Role called Team2 - let's apply them
 1. `kubectl apply -f team1.yaml && kubectl apply -f team2.yaml`
 1. `kubectl config get-contexts` - Our two other users are already set up here in our kubectl - jane who has access to namespace team1 and john who has access to namespace team2
-1. `kubectl config use-context microk8s-jane` - we've just logged in as Jane insted
+1. `kubectl config use-context microk8s-jane` - we've just logged in as Jane instead
 1. `kubectl get pods -A` if we try to ask to see all the Pods in all the namespaces again we now get an error that we can't use the cluster scope
 1. `kubectl get pods` removing the -A for all namespaces and it says we don't have any Pods in our team1 namespace which we do have access to
 1. `cd demos/network-policy/hello-app` - Let's deploy an app to our namespace
@@ -90,8 +90,8 @@ The answer to this problem is the OPA Gatekeeper admission controller preventing
 1. `./install-gatekeeper.sh` - there we go
 1. `cd ..` - Okay now lets try our nsenter again
 1. `./nsenter.sh` - As you can see we now have OPA Gatekeeper policies blocking all the insecure options nsenter was asking for - so that Pod is no longer allowed to launch. I am protected by this new admission controller!
-1. `cd opa-gatekeeper/contraint-templates` then `cat` the various files in here to look at the policies (called contraint-templates) that made that possible
-1. `cd ../constraints` then `cat` the various files in here - the constraints which say where to apply and where not to apply the contraint-tempaltes/policies
+1. `cd opa-gatekeeper/constraint-templates` then `cat` the various files in here to look at the policies (called constraint-templates) that made that possible
+1. `cd ../constraints` then `cat` the various files in here - the constraints which say where to apply and where not to apply the constraint-templates/policies
 1. `cd ..`, `./uninstall-gatekeeper.sh` - removing Gatekeeper for a future demo to work though
 
 These actually came from the Gatekeeper library on Github where there are a number of additional examples here - https://github.com/open-policy-agent/gatekeeper-library/tree/master/library
@@ -101,7 +101,7 @@ Also there is a good tool to test out your Rego (OPA's declarative language for 
 ### Falco
 Finally we had one more tool in our cluster all along here - Falco! That has been watching all this suspicious behavior.
 
-There are actually two Falcos running - one watching the Linux kernel syscalls on each Node as a Daemonset and one watching the Kubernetes audit trail as a Deployment. All of their events are aggregated by Falco Sidekick which can fan them out to any number of destinations such as your SIEM, your alerting systems like Pagerduty or your messaging tools like Slack.
+There are actually two Falcos running - one watching the Linux kernel syscalls on each Node as a DaemonSet and one watching the Kubernetes audit trail as a Deployment. All of their events are aggregated by Falco Sidekick which can fan them out to any number of destinations such as your SIEM, your alerting systems like Pagerduty or your messaging tools like Slack.
 
 1. Open Falcosidekick UI by going to port 30282 on your Node
     1. If using microk8s on a Mac or Windows machine this is the first IP listed when you run `multipass list` for microk8s-vm (the one that starts with 172. or 192.)
@@ -111,7 +111,9 @@ There are actually two Falcos running - one watching the Linux kernel syscalls o
 1. Then type `terminal` in the search box and see the Terminal shell in container events. These were triggered when we ran crictl exec on the host after we escaped there from the Pod.
 
 Alternatively, as the Falcosidekick UI doesn't yet work on the M1 Mac, you can use Elastic and Kibana to view the events. This is deployed by default instead with setup-microk8s-vm-mac.sh today:
-
+<details>
+  <summary>Elastic & Kibana Instructions</summary>
+  
 1. Open Kibana by going to port 30283 on your Node
     1. If using microk8s on a Mac this is the first IP listed when you run `multipass list` for microk8s-vm (the one that starts with 172. or 192.)
 1. Click to Explore on my own on the welcome screen
@@ -120,6 +122,7 @@ Alternatively, as the Falcosidekick UI doesn't yet work on the M1 Mac, you can u
 1. Type "logstash-*" for the Name, @timestamp for the Timestamp field and click the Create index pattern button
 1. Go to Discover once again
 1. In the query box type `kubernetes.namespace_name : "falco" and output : "*nsenter*" or output : "*hello-client-allowed*"` and run the query. Note the rules triggered on both the Kubernetes audit trail as well as the Node syscalls including `Create Privileged Pod`, `Launch Privileged Container` and `Attach/Exec Pod`
+</details>
 
 So, if somebody is able to exploit a misconfiguration or a vulnerability to escape the host boundaries then Falco can be configured to not only keep an audit trail of that but to alert you in real-time.
 
@@ -129,9 +132,9 @@ There is a great Falco 101 training on more details available here - https://lea
 
 ### Running containers as non-root
 
-It is also worth nothing that, in addition to the additional privileges we gave nsenter in the Kubernetes parameters, running as the root user within the container was required for this escape to work. Using Falco to alert on that when it happens (which as you can see it does by default with the rules in the Helm chart), as well as perhaps having OPA Gatekeeker block that so it isn't even possible, you can iterate through your environment to get all of your containers that don't truly need to be root running as non-root to really elevate your security posture.
+It is also worth nothing that, in addition to the additional privileges we gave nsenter in the Kubernetes parameters, running as the root user within the container was required for this escape to work. Using Falco to alert on that when it happens (which as you can see it does by default with the rules in the Helm chart), as well as perhaps having OPA Gatekeeper block that so it isn't even possible, you can iterate through your environment to get all of your containers that don't truly need to be root running as non-root to really elevate your security posture.
 
-This change to non-root often requires rebuilding your container with a new Dockerfile. A good example of the difference in Dockerfiles required to do it is [nginx](https://hub.docker.com/_/nginx) vs. [nginx-unprivileged](https://hub.docker.com/r/nginxinc/nginx-unprivileged). By default nginx wants to use port 80 and so runs as root in order to be able to do so. But they also build a version of it that doesn't and uses 8080 intead:
+This change to non-root often requires rebuilding your container with a new Dockerfile. A good example of the difference in Dockerfiles required to do it is [nginx](https://hub.docker.com/_/nginx) vs. [nginx-unprivileged](https://hub.docker.com/r/nginxinc/nginx-unprivileged). By default nginx wants to use port 80 and so runs as root in order to be able to do so. But they also build a version of it that doesn't and uses 8080 instead:
 * nginx Dockerfile that runs as root - https://github.com/nginxinc/docker-nginx/blob/fef51235521d1cdf8b05d8cb1378a526d2abf421/mainline/debian/Dockerfile
 * nginx Dockerfile that creates a nginx user/group (UID and GID 101) and uses that instead - https://github.com/nginxinc/docker-nginx-unprivileged/blob/main/Dockerfile-debian.template
 
@@ -139,7 +142,7 @@ This change to non-root often requires rebuilding your container with a new Dock
 
 Now let's look at how NetworkPolicies work and how to isolate network traffic within our cluster(s).
 
-We had already deployed a workload in team1 that included a server Pod (hello-server) as well as two client Pods (hello-client-allowed and hellow-client-blocked). 
+We had already deployed a workload in team1 that included a server Pod (hello-server) as well as two client Pods (hello-client-allowed and hello-client-blocked). 
 
 Out of the box all traffic is allowed which you can see as follows:
 1. `kubectl logs deployment/hello-client-allowed -n team1` as you can see it is getting a response from the server
@@ -147,15 +150,15 @@ Out of the box all traffic is allowed which you can see as follows:
 1. `cd hello-app`
 1. `kubectl apply -f  hello-client.yaml -n team2` Lets also deploy another set of our client Pods to the team2 namespace
 1. `kubectl logs deployment/hello-client-allowed -n team2` As you can see both the allowed
-1. `kubectl logs deployment/hello-client-bocked -n team2` And the 'blocked' Pods can contact our server pods from other Namespaces by default as well.
+1. `kubectl logs deployment/hello-client-blocked -n team2` And the 'blocked' Pods can contact our server pods from other Namespaces by default as well.
 
 There are two common ways to write NetworkPolicies to allow/deny traffic - against labels and against namespaces. And you can actually combine the two now as well. Let's start with namespaces:
 1. `cd ..`
-1. `cat network-policy-namespace.yaml` As you can see here we are saying we are allowing traffic from Pods within the namespace team1 to Pods with the label app set to hello-server (implicity also in the Namespace team1 where we are deploying the NetworkPolicy).
+1. `cat network-policy-namespace.yaml` As you can see here we are saying we are allowing traffic from Pods within the namespace team1 to Pods with the label app set to hello-server (implicitly also in the Namespace team1 where we are deploying the NetworkPolicy).
 1. `kubectl apply -f network-policy-namespace.yaml -n team1` Lets apply that NetworkPolicy
 1. `kubectl logs deployment/hello-client-allowed -n team1` and `kubectl logs deployment/hello-client-blocked -n team1` both of our Pods in team1 can reach the server
 1. `cd hello-app`
-1. `kubectl logs deployment/hello-client-allowed -n team2` and `kubectl logs deployment/hello-client-bocked -n team2` but neither of our Pods in team2 can anymore
+1. `kubectl logs deployment/hello-client-allowed -n team2` and `kubectl logs deployment/hello-client-blocked -n team2` but neither of our Pods in team2 can anymore
 
 Now let's try it with labels - which is better for restricting traffic within a Namespace to least privilege:
 1. `cat network-policy-label.yaml` As you can see here we are saying we are allowing traffic from Pods with the label app set to hello to Pods with the label app set to hello-server. 
