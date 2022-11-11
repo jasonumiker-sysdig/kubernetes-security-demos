@@ -110,9 +110,9 @@ There are actually two Falcos running - one watching the Linux kernel syscalls o
 1. Type `nsenter` in the search box and note the rules triggered on both the Kubernetes audit trail as well as the Node syscalls including `Create Privileged Pod`, `Launch Privileged Container` and `Attach/Exec Pod`
 1. Then type `terminal` in the search box and see the Terminal shell in container events. These were triggered when we ran crictl exec on the host after we escaped there from the Pod.
 
-Alternatively, as the Falcosidekick UI doesn't yet work on the M1 Mac, you can use Elastic and Kibana to view the events. This is deployed by default instead with setup-microk8s-vm-mac.sh today:
+Alternatively, as the Falcosidekick UI doesn't yet work on the M1 Mac, you can use Elastic and Kibana to view the events. This is deployed by default instead of the non-working Falcosidekick UI when you use setup-microk8s-vm-mac.sh today:
 <details>
-  <summary>Elastic & Kibana Instructions</summary>
+  <summary>(Optional) Elastic & Kibana Instructions</summary>
   
 1. Open Kibana by going to port 30283 on your Node
     1. If using microk8s on a Mac this is the first IP listed when you run `multipass list` for microk8s-vm (the one that starts with 172. or 192.)
