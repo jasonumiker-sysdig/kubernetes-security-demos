@@ -8,6 +8,8 @@ Mac:
 1. Install microk8s with a `brew install microk8s kubectl helm`
 1. Run setup-cluster/setup-microk8s-vm-mac.sh
 
+NOTE: On an M1 Mac the Falcosidekick UI is unsupported so the workshop substitutes in an Elastic/Kibana to see the Falco events instead.
+
 Windows:
 1. Be running a Pro or Enterprise version of Windows 10/11 that can do Hyper-V
 1. Install microk8s - https://microk8s.io/docs/install-windows
@@ -102,11 +104,22 @@ Finally we had one more tool in our cluster all along here - Falco! That has bee
 There are actually two Falcos running - one watching the Linux kernel syscalls on each Node as a Daemonset and one watching the Kubernetes audit trail as a Deployment. All of their events are aggregated by Falco Sidekick which can fan them out to any number of destinations such as your SIEM, your alerting systems like Pagerduty or your messaging tools like Slack.
 
 1. Open Falcosidekick UI by going to port 30282 on your Node
-    1. If using microk8s on a Mac or Windows machine this is the first IP listed when you run `multipass list` for microk8s-vm (the one that starts with 172.)
+    1. If using microk8s on a Mac or Windows machine this is the first IP listed when you run `multipass list` for microk8s-vm (the one that starts with 172. or 192.)
     1. If run in AWS then this will be the public IP of the EC2 instance
 1. Go to the Events Tab
 1. Type `nsenter` in the search box and note the rules triggered on both the Kubernetes audit trail as well as the Node syscalls including `Create Privileged Pod`, `Launch Privileged Container` and `Attach/Exec Pod`
 1. Then type `terminal` in the search box and see the Terminal shell in container events. These were triggered when we ran crictl exec on the host after we escaped there from the Pod.
+
+Alternatively, as the Falcosidekick UI doesn't yet work on the M1 Mac, you can use Elastic and Kibana to view the events. This is deployed by default instead with setup-microk8s-vm-mac.sh today:
+
+1. Open Kibana by going to port 30283 on your Node
+    1. If using microk8s on a Mac this is the first IP listed when you run `multipass list` for microk8s-vm (the one that starts with 172. or 192.)
+1. Click to Explore on my own on the welcome screen
+1. Go to Discover
+1. Click to Create index pattern
+1. Type "logstash-*" for the Name, @timestamp for the Timestamp field and click the Create index pattern button
+1. Go to Discover once again
+1. In the query box type `kubernetes.namespace_name : "falco" and output : "*nsenter*" or output : "*hello-client-allowed*"` and run the query. Note the rules triggered on both the Kubernetes audit trail as well as the Node syscalls including `Create Privileged Pod`, `Launch Privileged Container` and `Attach/Exec Pod`
 
 So, if somebody is able to exploit a misconfiguration or a vulnerability to escape the host boundaries then Falco can be configured to not only keep an audit trail of that but to alert you in real-time.
 

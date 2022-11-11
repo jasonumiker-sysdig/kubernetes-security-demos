@@ -5,7 +5,7 @@ multipass delete microk8s-vm
 multipass purge
 
 # Provision your local cluster VM
-multipass launch --cpus 2 --mem 8G --disk 40G --name microk8s-vm 22.04
+multipass launch --cpus 4 --mem 8G --disk 40G --name microk8s-vm 22.04
 
 # Install microk8s on it
 multipass exec microk8s-vm -- sudo snap install microk8s --channel=1.24/stable --classic
