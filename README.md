@@ -54,9 +54,10 @@ AWS:
 1. `kubectl config use-context microk8s-jane` - we've just logged in as Jane instead
 1. `kubectl get pods -A` if we try to ask to see all the Pods in all the namespaces again we now get an error that we can't use the cluster scope
 1. `kubectl get pods` removing the -A for all namespaces and it says we don't have any Pods in our team1 namespace which we do have access to
-1. `cd demos/network-policy/hello-app` - Let's deploy an app to our namespace
-1. `kubectl apply -f .`
+1. `cd demos/network-policy/hello-app`
+1. `kubectl apply -f .` - Let's deploy an app to our namespace
 1. `kubectl get pods` - As you can see we do have enough cluster access to deploy workloads within our team1 namespace
+1. `kubectl describe deployments hello-client-allowed` - Note under Pod Template -> Environment that a Kubernetes secret is getting mounted as environment variable API_KEY at runtime
 1. Now lets flip to John who is restricted to the team2 namespace
 1. `kubectl config use-context-microk8s-john`
 1. `kubectl get pods` We don't have any workloads deployed here yet
@@ -66,12 +67,13 @@ So, that was a very quick overview of how to configure multi-tenancy of Kubernet
 
 ## Host Isolation Demo
 
-1. `kubectl config get-contexts` Confirming we are still signed in as John who should be limited to the team2 namespace (as we gave him a Role there rather than a ClusterRole)
+1. `kubectl config get-contexts` - Confirming we are still signed in as John who should be limited to the team2 namespace (as we gave him a Role there rather than a ClusterRole)
+1. `kubectl describe secret hello-secret -n team1` - as expected we can't get at team1's secrets as john (as he only has access to team2's namespace)
 1. `cat nsenter.sh` - as we said you can ask for some things in your Podspecs such as hostPID and a privileged security context that allow you to break out of the Linux namespace boundaries. This asks for those things and then runs a tool called ns-enter to leave our Linux namespace. This should result in us having an interactive shell to the Kubernetes Node and as root.
 1. `./nsenter.sh` - and there we go - root@microk8s-vm which is our Kubernetes Node
 1. `ps aux` - when you are root in the host's Linux namespace you can see all the processes in all the containers
 1. `crictl ps` - worse than that I can connect to the container runtime that Kubernetes manages and bypass Kubernetes to control it directly with crictl
-1. `crictl ps | grep hello-client-allowed` - There is an API_KEY secret as part of Jane's workload in team1. Lets interactively connect into it!
+1. `crictl ps | grep hello-client-allowed` - There is the API_KEY secret as part of Jane's workload in team1. Lets interactively connect into it and see if we can get it!
 1. `crictl exec -it (copy/paste ID) /bin/sh` And now I am in that container interactively
 1. `set | grep API_KEY` and, since secrets are decrypted into the running containers as environment variables or files I can see those - even from things from other Kubernetes Namespaces
 1. `exit` to leave the container
