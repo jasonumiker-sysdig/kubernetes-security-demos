@@ -16,3 +16,5 @@ falcosidekick:
       #Uncomment if deploying Elasticsearch to the cluster
       #hostport: http://elasticsearch-master.monitoring.svc.cluster.local:9200
 tty: true
+image:
+  registry: public.ecr.aws
