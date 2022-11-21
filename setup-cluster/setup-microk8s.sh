@@ -4,9 +4,8 @@
 # Install microk8s on it
 snap install microk8s --channel=1.24/stable --classic
 
-# Enable CoreDNS, RBAC, hostpath-storage
-#microk8s enable dns rbac hostpath-storage prometheus
-microk8s enable dns rbac hostpath-storage
+# Enable CoreDNS, RBAC, hostpath-storage, ingress
+microk8s enable dns rbac hostpath-storage ingress
 microk8s status --wait-ready
 
 # Install kubectl in microk8s-vm
@@ -16,20 +15,20 @@ snap install kubectl --classic
 snap install helm --classic
 
 # Install crictl in microk8s-vm
-wget https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.24.1/crictl-v1.24.1-linux-arm64.tar.gz
-tar zxvf crictl-v1.24.1-linux-arm64.tar.gz -C /usr/local/bin
-rm -f crictl-v1.24.1-linux-arm64.tar.gz
+wget -q https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.24.1/crictl-v1.24.1-linux-amd64.tar.gz
+tar zxvf crictl-v1.24.1-linux-amd64.tar.gz -C /usr/local/bin
+rm -f crictl-v1.24.1-linux-amd64.tar.gz
 echo "runtime-endpoint: unix:///var/snap/microk8s/common/run/containerd.sock" > /etc/crictl.yaml
 
 # Set up the kubeconfig
 mkdir /root/.kube
 microk8s.config | cat - > /root/.kube/config
 
-# Install Elasticsearch (in place of Falcosidekick UI on Mac)
-#./install-elasticsearch.sh
-
 # Install Falco
-./install-falco.sh
+helm repo add falcosecurity https://falcosecurity.github.io/charts
+helm repo update
+helm install falco falcosecurity/falco --namespace falco --create-namespace -f falco-values.yaml
+helm install falco-k8saudit falcosecurity/falco --namespace falco --create-namespace -f falco-k8saudit-values.yaml 
 
 # Set up multi-tenancy
 ./setup-multitenant.sh
