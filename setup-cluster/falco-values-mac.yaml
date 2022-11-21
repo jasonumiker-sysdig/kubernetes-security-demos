@@ -1,14 +1,14 @@
 collectors:
   containerd:
-    socket: //var/snap/microk8s/common/run/containerd.sock
+    socket: /var/snap/microk8s/common/run/containerd.sock
 driver:
   kind: ebpf
 falco:
   json_output: true
 falcosidekick:
-  enabled: true
+  enabled: false
   webui:
-    enabled: true
+    enabled: false
     service:
       type: NodePort
   config: 

@@ -34,3 +34,5 @@ falco:
       library_path: libjson.so
       init_config: ""
   load_plugins: [k8saudit, json]
+  image:
+    registry: public.ecr.aws

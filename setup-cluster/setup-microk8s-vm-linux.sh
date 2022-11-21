@@ -8,8 +8,9 @@ multipass purge
 multipass launch --cpus 2 --mem 4G --disk 20G --name microk8s-vm 22.04
 
 # Deploy and run setup-microk8s.sh to our new VM
-multipass exec microk8s-vm -- git clone https://github.com/jasonumiker-sysdig/kubernetes-opensouce-security-demos.git
-multipass exec microk8s-vm -- sudo ./kubernetes-opensouce-security-demos/setup-cluster/setup-microk8s.sh
+multipass transfer ./bootstrap-microk8s-vm.sh microk8s-vm:/home/ubuntu/
+multipass exec microk8s-vm -- chmod +x /home/ubuntu/bootstrap-microk8s-vm.sh
+multipass exec microk8s-vm -- /home/ubuntu/bootstrap-microk8s-vm.sh
 
 # Copy the .kube/config to the local machine
 multipass transfer microk8s-vm:/home/ubuntu/.kube/config ~/.kube/config
