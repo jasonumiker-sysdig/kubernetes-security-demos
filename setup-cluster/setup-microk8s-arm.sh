@@ -15,28 +15,28 @@ snap install kubectl --classic
 snap install helm --classic
 
 # Install crictl in microk8s-vm
-wget -q https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.24.1/crictl-v1.24.1-linux-amd64.tar.gz
-tar zxvf crictl-v1.24.1-linux-amd64.tar.gz -C /usr/local/bin
-rm -f crictl-v1.24.1-linux-amd64.tar.gz
+wget -q https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.24.1/crictl-v1.24.1-linux-arm64.tar.gz
+tar zxvf crictl-v1.24.1-linux-arm64.tar.gz -C /usr/local/bin
+rm -f crictl-v1.24.1-linux-arm64.tar.gz
 echo "runtime-endpoint: unix:///var/snap/microk8s/common/run/containerd.sock" > /etc/crictl.yaml
 
 # Set up the kubeconfig
 mkdir /root/.kube
 microk8s.config | cat - > /root/.kube/config
 
-# Install Falco
+# Install Falco (excluding Falcosidekick UI which doesn't work on ARM)
 helm repo add falcosecurity https://falcosecurity.github.io/charts
 helm repo update
-helm install falco falcosecurity/falco --namespace falco --create-namespace -f falco-values.yaml
-helm install falco-k8saudit falcosecurity/falco --namespace falco --create-namespace -f falco-k8saudit-values.yaml 
+helm install falco falcosecurity/falco --namespace falco --create-namespace -f falco-values-arm.yaml
+helm install falco-k8saudit falcosecurity/falco --namespace falco --create-namespace -f falco-k8saudit-values-arm.yaml 
 
 # Install Elasticsearch (as alternative for FalcosidekickUI)
-#helm repo add elastic https://helm.elastic.co
-#helm repo add fluent https://fluent.github.io/helm-charts
-#helm repo update
-#helm install elasticsearch elastic/elasticsearch -n monitoring --create-namespace -f elastic-values.yaml
-#helm install fluent-bit fluent/fluent-bit -n monitoring -f fluentbit-values.yaml
-#helm install kibana elastic/kibana -n monitoring --set service.type=NodePort --set service.nodePort=30283
+helm repo add elastic https://helm.elastic.co
+helm repo add fluent https://fluent.github.io/helm-charts
+helm repo update
+helm install elasticsearch elastic/elasticsearch -n monitoring --create-namespace -f elastic-values.yaml
+helm install fluent-bit fluent/fluent-bit -n monitoring -f fluentbit-values.yaml
+helm install kibana elastic/kibana -n monitoring --set service.type=NodePort --set service.nodePort=30283
 
 # Set up multi-tenancy
 # Create token for Jane to access team1
