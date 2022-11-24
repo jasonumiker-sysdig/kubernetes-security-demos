@@ -34,7 +34,7 @@ helm install falco-k8saudit falcosecurity/falco --namespace falco --create-names
 helm repo add elastic https://helm.elastic.co
 helm repo add fluent https://fluent.github.io/helm-charts
 helm repo update
-helm install elasticsearch elastic/elasticsearch -n monitoring --create-namespace -f elastic-values.yaml
+helm install elasticsearch elastic/elasticsearch -n monitoring --create-namespace -f elastic-values.yaml --wait
 helm install fluent-bit fluent/fluent-bit -n monitoring -f fluentbit-values.yaml
 helm install kibana elastic/kibana -n monitoring --set service.type=NodePort --set service.nodePort=30283
 
