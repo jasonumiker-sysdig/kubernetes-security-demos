@@ -75,10 +75,10 @@ spec:
       # Pod-level security context to define the default UID and GIDs under which to
       # run all container processes. We use 9999 for all IDs since it is unprivileged
       # and known to be unallocated on the node instances.
-      securityContext:
-        runAsUser: 9999
-        runAsGroup: 9999
-        fsGroup: 9999
+      #securityContext:
+      #  runAsUser: 9999
+      #  runAsGroup: 9999
+      #  fsGroup: 9999
 
       # Define container properties
       containers:
