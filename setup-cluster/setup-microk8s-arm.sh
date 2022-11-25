@@ -52,20 +52,20 @@ echo $JANE_TOKEN",jane,jane" > ./known_tokens.csv
 echo $JOHN_TOKEN",john,john" >> ./known_tokens.csv
 
 # Add the new kubeconfig contexts for Jane and John
-kubectl config set-context microk8s-jane --cluster=microk8s-cluster --namespace=team1 --user=jane --kubeconfig /home/ubuntu/.kube/config
-kubectl config set-context microk8s-john --cluster=microk8s-cluster --namespace=team2 --user=john --kubeconfig /home/ubuntu/.kube/config
-echo "- name: jane" >> /home/ubuntu/.kube/config
-echo "  user:" >> /home/ubuntu/.kube/config
-echo "    token: "$JANE_TOKEN >> /home/ubuntu/.kube/config
-echo "- name: john" >> /home/ubuntu/.kube/config
-echo "  user:" >> /home/ubuntu/.kube/config
-echo "    token: "$JOHN_TOKEN >> /home/ubuntu/.kube/config
+kubectl config set-context microk8s-jane --cluster=microk8s-cluster --namespace=team1 --user=jane
+kubectl config set-context microk8s-john --cluster=microk8s-cluster --namespace=team2 --user=john
+echo "- name: jane" >> /root/.kube/config
+echo "  user:" >> /root/.kube/config
+echo "    token: "$JANE_TOKEN >> /root/.kube/config
+echo "- name: john" >> /root/.kube/config
+echo "  user:" >> /root/.kube/config
+echo "    token: "$JOHN_TOKEN >> /root/.kube/config
 cat known_tokens.csv >> /var/snap/microk8s/current/credentials/known_tokens.csv
 microk8s stop
 microk8s start
 mkdir /home/ubuntu/.kube/
 cp /root/.kube/config /home/ubuntu/.kube/config
-chown ubuntu:ubuntu /home/ubuntu/.kube/config
+chown ubuntu:ubuntu -R /home/ubuntu/.kube
 
 # Enable auditing
 #curl https://raw.githubusercontent.com/draios/sysdig-cloud-scripts/master/k8s_audit_config/audit-policy-v2.yaml > audit-policy.yaml
