@@ -23,3 +23,7 @@ image:
 loader:
   image:
     registry: public.ecr.aws
+customRules:
+  customrules.yaml: |-
+    - macro: user_known_ingress_remote_file_copy_activities
+      condition: container.name startswith "hello-client"
