@@ -11,7 +11,7 @@ falcosidekick:
     enabled: true
     service:
       type: NodePort
-  config: 
+  config:
     elasticsearch:
       #Uncomment if deploying Elasticsearch to the cluster
       #hostport: http://elasticsearch-master.monitoring.svc.cluster.local:9200
@@ -26,4 +26,4 @@ loader:
 customRules:
   customrules.yaml: |-
     - macro: user_known_ingress_remote_file_copy_activities
-      condition: container.name startswith "hello-client"
+      condition: container.name startswith "hello-client" or k8s.ns.name = "monitoring"
