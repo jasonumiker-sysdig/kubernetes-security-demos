@@ -1,4 +1,4 @@
-# Kubernetes open-source security demos
+# Kubernetes security demos
 
 These are demos of the topics discussed my recent blog post - https://sysdig.com/blog/multi-tenant-isolation-boundaries-kubernetes/
 
@@ -6,7 +6,7 @@ These are demos of the topics discussed my recent blog post - https://sysdig.com
 
 Mac:
 1. Install microk8s with a `brew install microk8s`
-1. Clone this repo - `git clone https://github.com/jasonumiker-sysdig/kubernetes-opensouce-security-demos.git`
+1. Clone this repo - `git clone https://github.com/jasonumiker-sysdig/kubernetes-security-demos.git`
 1. Run `setup-cluster/setup-microk8s-vm.sh` if on an Intel MAC and `setup-cluster/setup-microk8s-vm-arm.sh` if on an M1/M2 Mac.
 
 NOTE: On an M1/M2 Mac the Falcosidekick UI is currently unsupported so the workshop substitutes in an Elastic/Kibana to see the Falco events instead.
@@ -15,13 +15,13 @@ Windows:
 1. Be running a Pro or Enterprise version of Windows 10/11 that can do Hyper-V
 1. Install microk8s - https://microk8s.io/docs/install-windows
 1. Install git - https://gitforwindows.org/
-1. Clone this repo - `git clone https://github.com/jasonumiker-sysdig/kubernetes-opensouce-security-demos.git`
+1. Clone this repo - `git clone https://github.com/jasonumiker-sysdig/kubernetes-security-demos.git`
 1. Run `setup-cluster/setup-microk8s-vm-win.sh` from within a git bash shell/session
 
 Linux (via a VM managed by multipass):
 1. Install snap if it isn't included in your distro (e.g. `sudo dnf install snapd` on Fedora)
 1. Run `snap install multipass`
-1. Clone this repo - `git clone https://github.com/jasonumiker-sysdig/kubernetes-opensouce-security-demos.git`
+1. Clone this repo - `git clone https://github.com/jasonumiker-sysdig/kubernetes-security-demos.git`
 1. Run `setup-cluster/setup-microk8s-vm.sh`
 
 AWS:
@@ -53,7 +53,7 @@ Here are some other useful commands to manage that VM once it exists:
 
 ## Kubernetes Namespace and RBAC Demo
 1. `kubectl get pods -A` - We are currently signed in as the admin ClusterRole - we can do anything cluster-wide
-1. `cd kubernetes-opensouce-security-demos`
+1. `cd kubernetes-security-demos`
 1. `cat team1.yaml` - Here we're creating a new namespace, team1, and then creating the most basic and powerful Role possible that can do anything within that Namespace with *'s for apiGroups, Resources and Verbs. Like we said this is not a great idea especially on the verbs. Then finally we're binding that new Role to a user named Jane.
 1. `kubectl api-resources` this shows all the different resources that we can control the use of in our RBAC
 1. `kubectl get clusterrole admin -o yaml | less` - And we can ask for details on the few built-in ClusterRoles we can use as a guide. This admin role is intended to be for privileged users but not ones who can do anything. As you can see, the minute you don't do *s there is quite a lot of YAML here.
