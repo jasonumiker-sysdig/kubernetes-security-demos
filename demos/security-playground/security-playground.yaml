@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: security-playground
-          image: docker.io/sysdiglabs/security-playground:latest
+          image: jasonumiker/security-playground:latest
           ports:
             - name: http
               containerPort: 8080
