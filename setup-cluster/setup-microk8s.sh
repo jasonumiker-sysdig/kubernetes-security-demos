@@ -27,16 +27,8 @@ microk8s.config | cat - > /root/.kube/config
 # Install Falco
 helm repo add falcosecurity https://falcosecurity.github.io/charts
 helm repo update
-helm install falco falcosecurity/falco --namespace falco --create-namespace -f falco-values.yaml
-helm install falco-k8saudit falcosecurity/falco --namespace falco --create-namespace -f falco-k8saudit-values.yaml 
-
-# Install Elasticsearch (as alternative for FalcosidekickUI)
-#helm repo add elastic https://helm.elastic.co
-#helm repo add fluent https://fluent.github.io/helm-charts
-#helm repo update
-#helm install elasticsearch elastic/elasticsearch -n monitoring --create-namespace -f elastic-values.yaml --version 7.17.3 --wait
-#helm install fluent-bit fluent/fluent-bit -n monitoring -f fluentbit-values.yaml
-#helm install kibana elastic/kibana -n monitoring --set service.type=NodePort --set service.nodePort=30283 --version 7.17.3
+helm install falco falcosecurity/falco --namespace falco --create-namespace -f falco-values.yaml --kubeconfig /root/.kube/config
+helm install falco-k8saudit falcosecurity/falco --namespace falco --create-namespace -f falco-k8saudit-values.yaml --kubeconfig /root/.kube/config
 
 # Set up multi-tenancy
 # Create token for Jane to access team1
@@ -68,8 +60,6 @@ cp /root/.kube/config /home/ubuntu/.kube/config
 chown ubuntu:ubuntu -R /home/ubuntu/.kube
 
 # Enable auditing
-#curl https://raw.githubusercontent.com/draios/sysdig-cloud-scripts/master/k8s_audit_config/audit-policy-v2.yaml > audit-policy.yaml
-#curl https://raw.githubusercontent.com/draios/sysdig-cloud-scripts/master/k8s_audit_config/webhook-config.yaml.in > webhook-config.yaml.in
 mkdir /var/snap/microk8s/common/var/lib/k8s_audit
 AGENT_SERVICE_CLUSTERIP=$(kubectl get service falco-k8saudit-k8saudit-webhook -o=jsonpath={.spec.clusterIP} -n falco) envsubst < webhook-config.yaml.in > webhook-config.yaml
 cp ./webhook-config.yaml /var/snap/microk8s/common/var/lib/k8s_audit
