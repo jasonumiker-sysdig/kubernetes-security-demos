@@ -86,7 +86,7 @@ class AttendeeStack(Stack):
             vpc=VPCStack.vpc,
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
             security_group=jumpbox_security_group,
-            block_devices=[ec2.BlockDevice(device_name="/dev/xvda", volume=ec2.BlockDeviceVolume.ebs(16))],
+            block_devices=[ec2.BlockDevice(device_name="/dev/sda1", volume=ec2.BlockDeviceVolume.ebs(16))],
             instance_name="Attendee"+str(AttendeeIteration)+"Jumpbox"
         )
 
@@ -94,6 +94,7 @@ class AttendeeStack(Stack):
         jumpbox_instance.user_data.add_commands(
             "cd /home/ubuntu",
             "git clone https://github.com/jasonumiker-sysdig/kubernetes-security-demos",
+            "chown -R ubuntu:ubuntu kubernetes-security-demos"
             "cd /home/ubuntu/kubernetes-security-demos/setup-cluster",
             "./setup-microk8s.sh"
         )

@@ -40,19 +40,6 @@ kubectl config get-contexts
 echo "--------------------"
 kubectl describe secret hello-secret -n team1
 echo "--------------------"
-cd ~/kubernetes-security-demos/demos
-cat nsenter-node.sh
-echo "--------------------"
-#./nsenter-node.sh
-#ps aux
-#crictl ps
-#crictl ps | grep hello-client-allowed
-#export HELLO_CLIENT_CONTAINER_ID=$(crictl ps | grep hello-client-allowed | awk 'NR==1{print $1}')
-#crictl exec -it $HELLO_CLIENT_CONTAINER_ID /bin/sh
-#set | grep API_KEY
-#exit
-#crictl stop $HELLO_CLIENT_CONTAINER_ID && crictl rm $HELLO_CLIENT_CONTAINER_ID
-#exit
 cd ~/kubernetes-security-demos/demos/security-playground
 cat app.py
 echo "--------------------"
@@ -61,7 +48,7 @@ echo "--------------------"
 kubectl config use-context microk8s
 echo "--------------------"
 kubectl apply -f security-playground.yaml
-sleep 45
+sleep 60
 echo "--------------------"
 kubectl get pods -n security-playground
 echo "--------------------"
@@ -122,4 +109,21 @@ echo "--------------------"
 kubectl apply -f network-policy-label-all-namespaces.yaml -n team1
 echo "--------------------"
 kubectl logs deployment/hello-client-allowed -n team2
+echo "--------------------"
+cd ~/kubernetes-security-demos/demos
+cat nsenter-node.sh
+echo "--------------------"
+echo 'Run these commands in the terminal sessions below:'
+echo 'ps aux'
+echo 'export HELLO_CLIENT_CONTAINER_ID=$(crictl ps | grep hello-client-allowed | awk '\''NR==1{print $1}'\'')'
+echo 'crictl exec -it $HELLO_CLIENT_CONTAINER_ID /bin/sh'
+echo "--------------------"
+echo 'Then these in the nested terminal'
+echo 'set | grep API_KEY'
+echo 'exit'
+echo "--------------------"
+echo "Then these to finish out the outer terminal session:"
+echo 'crictl stop $HELLO_CLIENT_CONTAINER_ID && crictl rm $HELLO_CLIENT_CONTAINER_ID'
+echo 'exit'
+./nsenter-node.sh
 echo "--------------------"

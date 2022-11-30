@@ -44,8 +44,8 @@ echo $JANE_TOKEN",jane,jane" > ./known_tokens.csv
 echo $JOHN_TOKEN",john,john" >> ./known_tokens.csv
 
 # Add the new kubeconfig contexts for Jane and John
-kubectl config set-context microk8s-jane --cluster=microk8s-cluster --namespace=team1 --user=jane
-kubectl config set-context microk8s-john --cluster=microk8s-cluster --namespace=team2 --user=john
+kubectl config set-context microk8s-jane --cluster=microk8s-cluster --namespace=team1 --user=jane --kubeconfig=/root/.kube/config
+kubectl config set-context microk8s-john --cluster=microk8s-cluster --namespace=team2 --user=john --kubeconfig=/root/.kube/config
 echo "- name: jane" >> /root/.kube/config
 echo "  user:" >> /root/.kube/config
 echo "    token: "$JANE_TOKEN >> /root/.kube/config
