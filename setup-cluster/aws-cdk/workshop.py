@@ -92,9 +92,9 @@ class AttendeeStack(Stack):
 
         # Pre-install tools on our jumpbox
         jumpbox_instance.user_data.add_commands(
-            "cd /root",
+            "cd /home/ubuntu",
             "git clone https://github.com/jasonumiker-sysdig/kubernetes-security-demos",
-            "cd /root/kubernetes-security-demos/setup-cluster",
+            "cd /home/ubuntu/kubernetes-security-demos/setup-cluster",
             "./setup-microk8s.sh"
         )
 
