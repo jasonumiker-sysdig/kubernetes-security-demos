@@ -49,7 +49,7 @@ Here are some other useful commands to manage that VM once it exists:
 1. Go to the EC2 Console
 1. Tick the box next to the instance named the same as your username and then click the Connect button
 1. Pick the Session Manager tab then click the Connect button
-1. `sudo bash` then `cd ~` as all the tooling was installed for the root user
+1. `sudo su ubuntu` then `cd ~` as all the tooling was installed for the ubuntu user (not the ssm-user)
 
 ## Kubernetes Namespace and RBAC Demo
 1. `kubectl get pods -A` - We are currently signed in as the admin ClusterRole - we can do anything cluster-wide

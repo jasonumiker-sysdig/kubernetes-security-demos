@@ -94,7 +94,7 @@ class AttendeeStack(Stack):
         jumpbox_instance.user_data.add_commands(
             "cd /home/ubuntu",
             "git clone https://github.com/jasonumiker-sysdig/kubernetes-security-demos",
-            "chown -R ubuntu:ubuntu kubernetes-security-demos"
+            "chown -R ubuntu:ubuntu kubernetes-security-demos",
             "cd /home/ubuntu/kubernetes-security-demos/setup-cluster",
             "./setup-microk8s.sh"
         )
