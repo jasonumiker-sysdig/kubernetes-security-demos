@@ -114,7 +114,6 @@ cd ~/kubernetes-security-demos/demos
 cat nsenter-node.sh
 echo "--------------------"
 echo 'Run these commands in the terminal sessions below:'
-echo 'ps aux'
 echo 'export HELLO_CLIENT_CONTAINER_ID=$(crictl ps | grep hello-client-allowed | awk '\''NR==1{print $1}'\'')'
 echo 'crictl exec -it $HELLO_CLIENT_CONTAINER_ID /bin/sh'
 echo "--------------------"
