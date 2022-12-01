@@ -26,7 +26,10 @@ Linux (via a VM managed by multipass):
 
 AWS:
 1. Install node.js, npm, python3, pip3 and the AWS CLI 
-    1. Mac - `brew install node@16 python@3.9 awscli`
+    1. Mac
+      1. Install Homebrew (if not already installed) - `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
+      1. Run `brew install node@18 python@3.11 awscli`
+    1. Ubuntu (including via WSL) - `sudo apt update;sudo apt install -y nodejs npm python3-pip`
 1. cd `setup-cluster/aws-cdk`
 1. Edit cdk.json and enter the AWS account number, region and the number of attendees that you'd like
 1. Run `npm install`
