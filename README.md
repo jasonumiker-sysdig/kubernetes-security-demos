@@ -42,7 +42,7 @@ To clean up / destroy all the environment(s) when done:
 1. Run `./delete-iam-user-passwords.sh` to remove the login profile and console access from the IAM users
 1. Run `npx cdk destroy -all` to delete all the CloudFormation Stacks
 
-## Signing in as an attendee if the environment is in a local VM
+## Signing in if the environment is in a local VM
 1. Run `multipass shell microk8s-vm`
 
 Here are some other useful commands to manage that VM once it exists:
@@ -50,9 +50,9 @@ Here are some other useful commands to manage that VM once it exists:
 * `multipass start microk8s-vm` - start it up
 * `multipass delete microk8s-vm && multipass purge` - delete and then purge the VM
 
-## Signing in as an attendee if the environment is in AWS
+## Signing in if the environment is in AWS
 1. Go to https://console.aws.amazon.com/
-1. Choose IAM User and enter the AWS Account Number as well as the Attendee IAM Username and Password the facilitator will provide
+1. Retrieve your IAM Username and Password from workshop-passwords.csv or from the person who created the environments (who has it)
 1. Go to the EC2 Console
 1. Tick the box next to the instance named the same as your username and then click the Connect button
 1. Pick the Session Manager tab then click the Connect button
