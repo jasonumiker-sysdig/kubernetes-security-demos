@@ -313,7 +313,6 @@ There are two common ways to write NetworkPolicies to allow/deny traffic - again
 1. `cat network-policy-namespace.yaml` As you can see here we are saying we are allowing traffic from Pods within the namespace team1 to Pods with the label app set to hello-server (implicitly also in the Namespace team1 where we are deploying the NetworkPolicy).
 1. `kubectl apply -f network-policy-namespace.yaml -n team1` Lets apply that NetworkPolicy
 1. `kubectl logs deployment/hello-client-allowed -n team1` and `kubectl logs deployment/hello-client-blocked -n team1` both of our Pods in team1 can reach the server
-1. `cd ~/kubernetes-security-demos/demos/network-policy/hello-app`
 1. `kubectl logs deployment/hello-client-allowed -n team2` and `kubectl logs deployment/hello-client-blocked -n team2` but neither of our Pods in team2 can anymore
 
 Now let's try it with labels - which is better for restricting traffic within a Namespace to least privilege:
