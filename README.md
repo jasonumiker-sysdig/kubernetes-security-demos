@@ -36,7 +36,7 @@ AWS:
 1. Run `pip3 install -r requirements.txt`
 1. Run `npx cdk bootstrap` (once per account)
 1. Run `npx cdk deploy --all`
-1. Run `./set-iam-user-passwords.sh` to set a password on all the IAM users which it exports out to workshop-passwords.csv
+1. And once that's done run `./set-iam-user-passwords.sh` to set a password on all the IAM users which it exports out to workshop-passwords.csv
 
 To clean up / destroy all the environment(s) when done:
 1. Run `./delete-iam-user-passwords.sh` to remove the login profile and console access from the IAM users
