@@ -1,6 +1,8 @@
 # Kubernetes security demos
 
-These are demos of the topics discussed my recent blog post - https://sysdig.com/blog/multi-tenant-isolation-boundaries-kubernetes/
+I've recorded the delivery of these demos and the associated presentation and uploaded it to YouTube - https://youtu.be/gUhQmYVh_Xs
+
+And these are demos of the topics discussed my recent blog post - https://sysdig.com/blog/multi-tenant-isolation-boundaries-kubernetes/
 
 ## Pre-requisites
 
