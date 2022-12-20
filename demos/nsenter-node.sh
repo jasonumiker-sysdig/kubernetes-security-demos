@@ -1,8 +1,8 @@
 #!/bin/bash
 set -x
 
-nodeName=$(kubectl get nodes | awk 'FNR == 2{print $1}')
-#nodeName=$(kubectl get node ${node} -o template --template='{{index .metadata.labels "kubernetes.io/hostname"}}')
+nodeName=microk8s-vm
+#nodeName=$(kubectl get nodes | awk 'FNR == 2{print $1}')
 nodeSelector='"nodeSelector": { "kubernetes.io/hostname": "'${nodeName:?}'" },'
 podName=nsenter-${nodeName}
 # convert @ to -
