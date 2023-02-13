@@ -15,14 +15,8 @@ falcosidekick:
     elasticsearch:
       #Uncomment if deploying Elasticsearch to the cluster
       #hostport: http://elasticsearch-master.monitoring.svc.cluster.local:9200
-  image:
-    registry: public.ecr.aws
 tty: true
-image:
-  registry: public.ecr.aws
 loader:
-  image:
-    registry: public.ecr.aws
 customRules:
   customrules.yaml: |-
     - macro: user_known_ingress_remote_file_copy_activities
