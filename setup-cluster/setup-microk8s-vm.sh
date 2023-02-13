@@ -3,9 +3,10 @@
 # You can reset things back to defaults by deleting the VM and then let the script recreate
 multipass delete microk8s-vm
 multipass purge
+sleep 30
 
 # Provision your local cluster VM
-multipass launch --cpus 2 --mem 4G --disk 20G --name microk8s-vm 22.04
+multipass launch --cpus 2 --memory 4G --disk 20G --name microk8s-vm 22.04
 
 # Deploy and run setup-microk8s.sh to our new VM
 multipass transfer ./bootstrap-microk8s-vm.sh microk8s-vm:/home/ubuntu/
