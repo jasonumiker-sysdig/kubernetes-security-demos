@@ -15,10 +15,11 @@ snap install kubectl --channel 1.24/stable --classic
 snap install helm --classic
 
 # Install crictl in microk8s-vm
-wget -q https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.24.1/crictl-v1.24.1-linux-amd64.tar.gz
-tar zxvf crictl-v1.24.1-linux-amd64.tar.gz -C /usr/local/bin
-rm -f crictl-v1.24.1-linux-amd64.tar.gz
-echo "runtime-endpoint: unix:///var/snap/microk8s/common/run/containerd.sock" > /etc/crictl.yaml
+ARCH=$(dpkg --print-architecture)
+wget -q https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.25.0/crictl-v1.25.0-linux-$ARCH.tar.gz
+tar zxvf crictl-v1.25.0-linux-$ARCH.tar.gz -C /usr/local/bin
+rm -f crictl-v1.25.0-linux-$ARCH.tar.gz
+echo "runtime-endpoint: unix:///var/run/containerd/containerd.sock" > /etc/crictl.yaml
 
 # Set up the kubeconfig
 mkdir /root/.kube
@@ -27,8 +28,24 @@ microk8s.config | cat - > /root/.kube/config
 # Install Falco
 helm repo add falcosecurity https://falcosecurity.github.io/charts
 helm repo update
-helm install falco falcosecurity/falco --namespace falco --create-namespace -f falco-values.yaml --kubeconfig /root/.kube/config
-helm install falco-k8saudit falcosecurity/falco --namespace falco --create-namespace -f falco-k8saudit-values.yaml --kubeconfig /root/.kube/config
+# If we are running on ARM then launch with the arm values.yamls otherwise the 'normal' ones
+if [[ $ARCH == "arm64" ]]; then
+    helm install falco falcosecurity/falco --namespace falco --create-namespace -f falco-values-arm.yaml --kubeconfig /root/.kube/config
+    helm install falco-k8saudit falcosecurity/falco --namespace falco --create-namespace -f falco-k8saudit-values-arm.yaml --kubeconfig /root/.kube/config
+else
+    helm install falco falcosecurity/falco --namespace falco --create-namespace -f falco-values.yaml --kubeconfig /root/.kube/config
+    helm install falco-k8saudit falcosecurity/falco --namespace falco --create-namespace -f falco-k8saudit-values.yaml --kubeconfig /root/.kube/config
+fi
+
+# Install Elasticsearch (as alternative for FalcosidekickUI) on ARM
+if [[ $ARCH == "arm64" ]]; then
+    helm repo add elastic https://helm.elastic.co
+    helm repo add fluent https://fluent.github.io/helm-charts
+    helm repo update
+    helm install elasticsearch elastic/elasticsearch -n monitoring --create-namespace -f elastic-values.yaml --version 7.17.3 --wait
+    helm install fluent-bit fluent/fluent-bit -n monitoring -f fluentbit-values.yaml
+    helm install kibana elastic/kibana -n monitoring --set service.type=NodePort --set service.nodePort=30283 --version 7.17.3
+fi
 
 # Set up multi-tenancy
 # Create token for Jane to access team1

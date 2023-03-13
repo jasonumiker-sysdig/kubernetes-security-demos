@@ -6,15 +6,15 @@ driver:
 falco:
   json_output: true
 falcosidekick:
-  enabled: false
+  #enabled: true
   webui:
-    enabled: false
+    enabled: true
     service:
       type: NodePort
   config:
     elasticsearch:
       #Uncomment if deploying Elasticsearch to the cluster
-      hostport: http://elasticsearch-master.monitoring.svc.cluster.local:9200
+      #hostport: http://elasticsearch-master.monitoring.svc.cluster.local:9200
 tty: true
 loader:
 customRules:
