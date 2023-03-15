@@ -2,6 +2,7 @@
 # This script will run through all the demos to both test that they work as
 # well as to trigger all of the associated Events in Falco
 
+# Kubernetes Namespace and RBAC Demo
 kubectl get pods -A
 echo "--------------------"
 cd ~/kubernetes-security-demos
@@ -40,12 +41,17 @@ kubectl config get-contexts
 echo "--------------------"
 kubectl describe secret hello-secret -n team1
 echo "--------------------"
+
+# Host Isolation Demo - Exploiting vulnerabilities at runtime 
 cd ~/kubernetes-security-demos/demos/security-playground
 cat app.py
 echo "--------------------"
 cat example-curls.sh
 echo "--------------------"
 kubectl config use-context microk8s
+echo "--------------------"
+kubectl apply -f ../data-exfil-postgres/postgres-sakila.yaml
+sleep 60
 echo "--------------------"
 kubectl apply -f security-playground.yaml
 sleep 60
@@ -54,6 +60,8 @@ kubectl get pods -n security-playground
 echo "--------------------"
 ./example-curls.sh
 echo "--------------------"
+
+# OPA Gatekeeper
 cd ~/kubernetes-security-demos/opa-gatekeeper
 cat ./install-gatekeeper.sh
 echo "--------------------"
@@ -62,11 +70,11 @@ echo "--------------------"
 cd ~/kubernetes-security-demos/demos
 ./nsenter-node.sh
 echo "--------------------"
-cd ~/kubernetes-security-demos/opa-gatekeeper/policies/constraint-templates/
-cd ~/kubernetes-security-demos/opa-gatekeeper/policies/constraints
 cd ~/kubernetes-security-demos/opa-gatekeeper
 ./uninstall-gatekeeper.sh
 echo "--------------------"
+
+# NetworkPolicy Demo
 cd ~/kubernetes-security-demos/demos/security-playground
 kubectl logs deployment/hello-client-allowed -n team1
 echo "--------------------"
@@ -109,20 +117,4 @@ echo "--------------------"
 kubectl apply -f network-policy-label-all-namespaces.yaml -n team1
 echo "--------------------"
 kubectl logs deployment/hello-client-allowed -n team2
-echo "--------------------"
-cd ~/kubernetes-security-demos/demos
-cat nsenter-node.sh
-echo "--------------------"
-echo 'Run these commands in the terminal sessions below:'
-echo 'export HELLO_CLIENT_CONTAINER_ID=$(crictl ps | grep hello-client-allowed | awk '\''NR==1{print $1}'\'')'
-echo 'crictl exec -it $HELLO_CLIENT_CONTAINER_ID /bin/sh'
-echo "--------------------"
-echo 'Then these in the nested terminal'
-echo 'set | grep API_KEY'
-echo 'exit'
-echo "--------------------"
-echo "Then these to finish out the outer terminal session:"
-echo 'crictl stop $HELLO_CLIENT_CONTAINER_ID && crictl rm $HELLO_CLIENT_CONTAINER_ID'
-echo 'exit'
-./nsenter-node.sh
 echo "--------------------"
