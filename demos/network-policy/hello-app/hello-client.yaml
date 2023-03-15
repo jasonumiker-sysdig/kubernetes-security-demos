@@ -39,6 +39,8 @@ type: Opaque
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  labels:
+    app: hello
   name: hello-client-allowed
 spec:
   # Only run a single pod
@@ -77,7 +79,7 @@ spec:
         # A simple while loop that attempts to access the hello-server service every
         # two seconds.
         command: ["sh", "-c"]
-        args: ["while true; do wget -qO- --timeout=2 http://hello-server.team1.svc:8080; sleep 2; done"]
+        args: ["while true; do wget -qO- --timeout=2 http://hello-server.team1.svc:8080; sleep 30; done"]
 
         # Container-level security settings
         # Note, containers are unprivileged by default
@@ -97,6 +99,8 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  labels:
+    app: not-hello
   name: hello-client-blocked
 spec:
 
@@ -130,13 +134,13 @@ spec:
 
       # Define container properties
       containers:
-      - image: alpine:3.7
+      - image: alpine:3.17
         name: hello-client-blocked
 
         # A simple while loop that attempts to access the hello-server service every
         # two seconds.
         command: ["sh", "-c"]
-        args: ["while true; do wget -qO- --timeout=2 http://hello-server.team1.svc:8080; sleep 2; done"]
+        args: ["while true; do wget -qO- --timeout=2 http://hello-server.team1.svc:8080; sleep 30; done"]
 
         # Container-level security settings
         # Note, containers are unprivileged by default

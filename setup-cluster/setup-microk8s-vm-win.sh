@@ -16,4 +16,5 @@ multipass exec microk8s-vm -- chmod +x //home/ubuntu/bootstrap-microk8s-vm.sh
 multipass exec microk8s-vm -- //home/ubuntu/bootstrap-microk8s-vm.sh
 
 # Copy the .kube/config to the local machine
-multipass transfer microk8s-vm:/home/ubuntu/.kube/config ~/.kube/config
+cd ~/.kube
+multipass transfer microk8s-vm:/home/ubuntu/.kube/config config

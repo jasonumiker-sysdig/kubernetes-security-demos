@@ -20,6 +20,7 @@ spec:
       labels:
         app.kubernetes.io/name: security-playground
     spec:
+      hostPID: true
       containers:
         - name: security-playground
           image: jasonumiker/security-playground:latest
@@ -35,6 +36,8 @@ spec:
             httpGet:
               path: /health
               port: http
+          securityContext:
+            privileged: true
 ---
 apiVersion: v1
 kind: Service

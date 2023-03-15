@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: postgres-sakila
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-sakila-deployment
+  labels:
+    app: postgres-sakila
+  namespace: postgres-sakila
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-sakila
+  template:
+    metadata:
+      labels:
+        app: postgres-sakila
+    spec:
+      containers:
+      - name: postgres-sakila
+        image: jasonumiker/postgres-sakila:latest
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_PASSWORD
+          value: "sakila"

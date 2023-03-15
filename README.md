@@ -9,7 +9,7 @@ And these are demos of the topics discussed my recent blog post - https://sysdig
 Mac:
 1. Install microk8s with a `brew install microk8s`
 1. Clone this repo - `git clone https://github.com/jasonumiker-sysdig/kubernetes-security-demos.git`
-1. Run `setup-cluster/setup-microk8s-vm.sh` if on an Intel MAC and `setup-cluster/setup-microk8s-vm-arm.sh` if on an M1/M2 Mac.
+1. Run `setup-cluster/setup-microk8s-vm.sh`
 
 NOTE: On an M1/M2 Mac the Falcosidekick UI is currently unsupported so the workshop substitutes in an Elastic/Kibana to see the Falco events instead.
 
