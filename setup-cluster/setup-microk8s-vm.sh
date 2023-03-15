@@ -9,8 +9,17 @@ multipass launch --cpus 2 --memory 5G --disk 20G --name microk8s-vm 22.04
 
 # Deploy and run setup-microk8s.sh to our new VM
 multipass transfer ./bootstrap-microk8s-vm.sh microk8s-vm:/home/ubuntu/
-multipass exec microk8s-vm -- chmod +x /home/ubuntu/bootstrap-microk8s-vm.sh
-multipass exec microk8s-vm -- /home/ubuntu/bootstrap-microk8s-vm.sh
+if [[ $OS == "Windows_NT" ]]; then
+    multipass exec microk8s-vm -- sudo apt update -y
+    multipass exec microk8s-vm -- sudo apt install dos2unix -y
+    multipass exec microk8s-vm -- dos2unix //home/ubuntu/bootstrap-microk8s-vm.sh
+    multipass exec microk8s-vm -- chmod +x //home/ubuntu/bootstrap-microk8s-vm.sh
+    multipass exec microk8s-vm -- //home/ubuntu/bootstrap-microk8s-vm.sh
+else
+    multipass exec microk8s-vm -- chmod +x /home/ubuntu/bootstrap-microk8s-vm.sh
+    multipass exec microk8s-vm -- /home/ubuntu/bootstrap-microk8s-vm.sh
+fi
 
 # Copy the .kube/config to the local machine
-multipass transfer microk8s-vm:/home/ubuntu/.kube/config ~/.kube/config
+cd ~/.kube
+multipass transfer microk8s-vm:/home/ubuntu/.kube/config config
