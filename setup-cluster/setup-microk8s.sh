@@ -5,7 +5,7 @@
 snap install microk8s --channel=1.24-eksd/stable --classic
 
 # Enable CoreDNS, RBAC, hostpath-storage, ingress
-microk8s enable dns rbac hostpath-storage ingress
+microk8s enable dns rbac hostpath-storage
 microk8s status --wait-ready
 
 # Install kubectl in microk8s-vm

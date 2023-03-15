@@ -74,6 +74,13 @@ cd ~/kubernetes-security-demos/opa-gatekeeper
 ./uninstall-gatekeeper.sh
 echo "--------------------"
 
+#Kubebench
+cd ~/kubernetes-security-demos/demos
+echo "--------------------"
+kubectl apply -f kubebench-job.yaml
+echo "--------------------"
+kubectl logs job/kube-bench
+
 # NetworkPolicy Demo
 cd ~/kubernetes-security-demos/demos/security-playground
 kubectl logs deployment/hello-client-allowed -n team1

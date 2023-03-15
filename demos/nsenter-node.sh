@@ -1,23 +1,11 @@
 #!/bin/bash
 set -x
 
-nodeName=microk8s-vm
-#nodeName=$(kubectl get nodes | awk 'FNR == 2{print $1}')
-nodeSelector='"nodeSelector": { "kubernetes.io/hostname": "'${nodeName:?}'" },'
-podName=nsenter-${nodeName}
-# convert @ to -
-podName=${podName//@/-}
-# convert . to -
-podName=${podName//./-}
-# truncate podName to 63 characters which is the kubernetes max length for it
-podName=${podName:0:63}
-
-kubectl run ${podName:?} --restart=Never -it --rm --image overriden --overrides '
+kubectl run nsenter --restart=Never -it --rm --image overriden --overrides '
 {
   "spec": {
     "hostPID": true,
     "hostNetwork": true,
-    '"${nodeSelector?}"'
     "tolerations": [{
         "operator": "Exists"
     }],

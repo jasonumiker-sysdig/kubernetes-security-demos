@@ -5,6 +5,8 @@ I've recorded the delivery of these demos and the associated presentation and up
 And these are demos of the topics discussed my recent blog post - https://sysdig.com/blog/multi-tenant-isolation-boundaries-kubernetes/
 
 ## Pre-requisites
+By default the VM running the microk8s Kubernetes as well as the associated tooling and the demo applications uses 4 vCPUs and 8GB of RAM. You can try to decrease this in the setup-cluster/setup-microk8s-vm.sh file, but below this I noticed some components are periodically restarted for failing probes etc. - especialy if you are running Elastic instead of Falcosidekick (as required on ARM) to inspect Falco's event logs.
+
 
 Mac:
 1. Install microk8s with a `brew install microk8s`
@@ -18,7 +20,7 @@ Windows:
 1. Install microk8s - https://microk8s.io/docs/install-windows
 1. Install git - https://gitforwindows.org/
 1. Clone this repo - `git clone https://github.com/jasonumiker-sysdig/kubernetes-security-demos.git`
-1. Run `setup-cluster/setup-microk8s-vm-win.sh` from within a git bash shell/session
+1. Run `setup-cluster/setup-microk8s-vm.sh` from within a git bash shell/session
 
 Linux (via a VM managed by multipass):
 1. Install snap if it isn't included in your distro (e.g. `sudo dnf install snapd` on Fedora)
@@ -87,7 +89,36 @@ So, that was a very quick overview of how to configure multi-tenancy of Kubernet
 
 ## Host Isolation Demo
 
-### Container Escape - impacting the Node and/or other workloads running there
+### Exploiting vulnerabilities (known CVEs, unknown zero-days or vulnerabilities within your own code etc.) at runtime to control the vulnerable container
+
+There are also a number of things that we can do without needing to escape the container. The worst vulnerabilities allow you to do remote code execution (RCE) of the services via malformed network calls to them or insufficient security of the APIs they are exposing.
+
+To illustrate the worst-case-scenario of that we have the simplest and least secure Python app possible that we are calling security-playground:
+1. `cd ~/kubernetes-security-demos/demos/security-playground`
+1. `cat app.py` - we can see just see just how simple this Python app is - it'll read any file you ask it to with a RESTful GET, write any file you ask it to with a RESTful POST and even execute any file you want it to with a POST to the /exec URI path.
+1. `cat example-curls.sh` Since this is just REST we can do these exploits with just `curl` commands.
+1. `kubectl config use-context microk8s` - Let's go back to our admin role (to allow our kubectl get nodes to work)
+1. `kubectl apply -f ../data-exfil-postgres/postgres-sakila.yaml` to deploy a sample database for us to try to exfiltrate data from using this example vulnerability
+1. `kubectl apply -f security-playground.yaml` to deploy security-playground
+1. `kubectl get pods -n security-playground` - keep running this until our Pod has come up
+1. `./example-curls.sh` - to run these example curls which will:
+    1. Read a sensitive file (/etc/shadow)
+    1. Write a file to a sensitive location (/bin)
+    1. Read that new file back from that sensitive location
+    1. Install dig from apt and then do some DNS queries against the Kubernetes service discovery (we can see all the services running on the cluster by querying any.any.svc.cluster.local)
+    1. Download as script that, in turn, tries to run some cyrpto mining within our Pod (note that this currently doesn't work on arm like M1/M2 Mac - working on getting the crypto mining example working there too)
+    1. Run nsenter (a tool to let us change Linux namespaces) to escape our container and call crictl (the Docker CLI equivilent for the containerd container runtime on the host) to show we can interact with the containers on the host that aren't even in our K8s Namespace
+    1. Leverage that same escape to connect to a database running in a Pod within another K8s Namespace and exfiltrate data from it with the DB's CLI
+
+This example is interesting because:
+1. It could represent a worst-case zero-day - the next Log4j or Struts etc. - that we don't yet know about and that our container image vulnerability scans won't pick up yet without a public CVE in the databases
+1. It could be our own code which will never have a public CVE against it
+
+We'll see in a future section that Falco recorded this nefarious runtime behavior for us.
+
+### Escaping container to open an interactive nsenter shell on the host
+We can also use kubectl exec interactively (the -it) option to leverage that same container escape approach as a sort of "ssh to the host as root". This is showing how an external or even inside threat actor can take some access to the cluster with kubectl conmbined with insecure options in the PodSpec to break out of their container and get privilege escalation.
+
 1. `kubectl config get-contexts` - Confirming we are still signed in as John who should be limited to the team2 namespace (as we gave him a Role there rather than a ClusterRole)
 1. `kubectl describe secret hello-secret -n team1` - as expected we can't get at team1's secrets as john (as he only has access to team2's namespace)
 1. `cd ~/kubernetes-security-demos/demos`
@@ -105,29 +136,6 @@ So, that was a very quick overview of how to configure multi-tenancy of Kubernet
 
 So even though we properly set up our Kubernetes RBAC and Namespaces this host-level container isolation let us down as people who can launch a pod in one namespace with those defaults can 'own' the Node and everything running on it - even if those things are from a different Namespace.
 
-### Exploiting vulnerabilities (known CVEs, unknown zero-days or vulnerabilities within your own code etc.) at runtime
-
-There are also a number of things that we can do without needing to escape the container. The worst vulnerabilities allow you to do remote code execution (RCE) of the services via malformed network calls to them or insufficient security of the APIs they are exposing.
-
-To illustrate the worst-case-scenario of that we have the simplest and least secure Python app possible that we are calling security-playground:
-1. `cd ~/kubernetes-security-demos/demos/security-playground`
-1. `cat app.py` - we can see just see just how simple this Python app is - it'll read any file you ask it to with a RESTful GET, write any file you ask it to with a RESTful POST and even execute any file you want it to with a POST to the /exec URI path.
-1. `cat example-curls.sh` Since this is just REST we can do these exploits with just `curl` commands.
-1. `kubectl config use-context microk8s` - Let's go back to our admin role (to allow our kubectl get nodes to work)
-1. `kubectl apply -f security-playground.yaml` to deploy security-playground
-1. `kubectl get pods -n security-playground` - keep running this until our Pod has come up
-1. `./example-curls.sh` - to run these example curls which will:
-    1. Read a sensitive file (/etc/shadow)
-    1. Write a file to a sensitive location (/bin)
-    1. Read that new file back from that sensitive location
-    1. Install dig from apt and then do some DNS queries against the Kubernetes service discovery
-    1. Download as script that, in turn, tries to run some cyrpto mining within our Pod (note that this currently doesn't work on arm like M1/M2 Mac - working on getting the crypto mining example working there too)
-
-This example is interesting because:
-1. It could represent a worst-case zero-day - the next Log4j or Struts etc. - that we don't yet know about and that our container image vulnerability scans won't pick up yet without a public CVE in the databases
-1. It could be our own code which will never have a public CVE against it
-
-We'll see in a future section that Falco recorded this nefarious runtime behavior for us.
 
 ### Open Policy Agent (OPA) Gatekeeper
 The answer to this problem is the OPA Gatekeeper admission controller preventing me asking for those insecure parameters in my nsenter Podspec. This isn't there by default though in most clusters - even things like AWS EKS, Google GKE or MS AKS. Though in some you can opt-in to them. One way or the other if you are doing multi-tenancy you need to ensure you have it.
@@ -146,32 +154,42 @@ These actually came from the Gatekeeper library on Github where there are a numb
 
 Also there is a good tool to test out your Rego (OPA's declarative language for policies) here - https://play.openpolicyagent.org/
 
+### Kubebench
+In addition to OPA Gatekeeper, which can block things like the insecure options in your PodSpecs, there are some free opensource tools like [kubebench](https://github.com/aquasecurity/kube-bench) that can scan your cluster's posture against things like the CIS Benchmark. The CIS benchmark covers not just those options but many other aspects of cluster security.
+
+To see this in action:
+1. `cd ~/kubernetes-security-demos/demos`
+1. `kubectl apply -f kubebench-job.yaml` to deploy a one-time job to scan your cluster. You could change this job's Kubernetes spec to run regularly if you wanted.
+1. `kubectl logs job/kube-bench` to have a look at the results
+
 ### Falco
 Finally, we've had a free opensource tool in our cluster all along here watching what we've been up to - [Falco](https://falco.org/). Falco watches streams of data such as the Linux kernel syscalls on all your Nodes, as well as your Kubernetes audit trail, for suspicious behavior and can alert you to it in realtime. This is often referred to as "Runtime threat detection."
 
 There are actually two Falcos running - one watching the Linux kernel syscalls on each Node as a DaemonSet and one watching the Kubernetes audit trail as a Deployment. All of their events are aggregated by Falco Sidekick which can fan them out to any number of destinations such as your SIEM, your alerting systems like Pagerduty or your messaging tools like Slack.
 
-1. Open Falcosidekick UI by going to port http://(IP):30282 on your Node
+1. Open Falcosidekick UI by going to port http://(IP):30282 on your Node and using the username/password of admin/admin
     1. If you are signed into a microk8s-vm on your Mac or Windows machine, you can run `kubectl get nodes -o wide` to find the IP address to use (the INTERNAL-IP)
     1. If run in AWS then this will be the public IP of the EC2 instance
 1. Note the Rules that have been firing. Many of these things might not be issues but it is good that Falco has recorded them so we can decide if they are or they aren't in our case.
 1. Go to the Events Tab to see the Events in more detail.
-    1. First we'll search for `nsenter` in the search box under the Sources dropdown:
-      1. We can see that john is a "disallowed" K8s user calling the API. This Falco default has an allow-list of expected users. We'll need to tune that for our environment or turn it off - I'll show you how to do that in a second.
-      1. Then we can see the `Launch Privileged Container` (those privileges enabled us to escape the container later)
-      1. Then we can see that john did an `Attach/Exec into the Pod` (connected interactively) - Also note that, while the `Launch Privileged Container` was determined from the Node's Linux syscalls, that this was determined from the k8s_audit trail - and we see a combined/aggregated timeline of it all here.
-    1. Now search for `terminal` in the search box:
-      1. Here is the `Terminal shell in container` we did to connect to the hello-client via crictl when we escaped onto the host
-    1. Finally search for `playground` in the search box:
-      1. We see a `Read sensitive file untrusted` from the curl that read /etc/shadow
-      1. We see a `Launch Package Management Process in Container` where our curl download the `dig` from apt
-      1. Then we see the `Launch Suspicious Network Tool in Container` when we ran that `dig` against Kubernetes' DNS service discovery
-      1. Then we see a `Launch Ingress Remote File Copy Tool in Container` in response to a `curl` to download a script
-      1. And finally the `Detect crypto miners using the Stratum protocol` when that script attemped to launch crypto mining within our container exploiting our mock "zero day".
+    1. First we'll search for `playground` in the search box under the Sources dropdown then scroll to the bottom and increase the Rows per page to 50. Note the following events:
+        1. `Launch Privileged Container` which is one of the parameters that undermines container isolation so we could escape
+        1. `Read sensitive file untrusted` which was when we read /etc/shadow
+        1. `Write below binary dir` when we wrote a file to /bin
+        1. `Launch Package Management Process in Container` when we were apt install-ing things
+        1. `Launch Suspicious Network Tool in Container` when we did our dig against the K8s DNS service discovery
+        1. `Launch Ingress Remote File Copy Tools in Container` where we were curl-ing in our script to start the cyrpto miner
+        1. `Detect crypto miners using the Stratum protocol` (Note that you won't see this on ARM as the cypto miner we're using is Intel-only atm) our script launching a crypto miner
+        1. `The docker client is executed in a container` when we run `crictl` to manipulate the local container runtine circumventing K8s
+        1. Note that in the last docker client we see the psql being run which would tell us that data likely was exfiltrated here
+    1. Then we'll search for `jane` to say we want to see any Falco events where the user was jane
+        1. `Disallowed K8s User` reflects that jane isn't in a built-in allow list of users so any API call she makes (via the kubectl CLI) is captured here. We'll show you how to tune Falco so that it doesn't show you that in the next section.
+    1. (Optional) remove the search and/or go to the Dashboard tab to look around through the various other Events that Falco has caught during our session
 
 Alternatively, as the Falcosidekick UI doesn't yet work on the M1 Mac, you can use Elastic and Kibana to view the events. This is deployed by default instead of the non-working Falcosidekick UI when you use setup-microk8s-vm-arm.sh today. And, if you want both Falcosidekick UI as well as Elastic/Kibana, then you can deploy setup-microk8s-vm-with-elastic.sh.
+
 <details>
-  <summary>(Optional) Elastic & Kibana Instructions</summary>
+  <summary>(For ARM machines where Falco Sidekick UI isn't yet working) Elastic & Kibana Instructions</summary>
   
 1. Open Kibana by going to port http://(IP):30283 on your Node
     1. If you are signed into a microk8s-vm on your Mac or Windows machine, you can run `kubectl get nodes -o wide` to find the IP address to use (the INTERNAL-IP)
@@ -185,23 +203,23 @@ Alternatively, as the Falcosidekick UI doesn't yet work on the M1 Mac, you can u
 1. In the search box type `kubernetes.namespace_name : "falco"` to show the logs from our two Falco agents (one for the Node syscalls and one for the Kubernetes audit trail)
 1. Make sure that the time range to the right of the search box we are looking at covers everything we've done today
 1. Click the carrot/arrow next to the top document and if you hover over Actions to the left of the each Field you'll see four options - Filter for, Filter out, Toggle column in table and Filter for field present. We want to show a few columns so click on Toggle column for these two Fields:
-  1. `output_fields.k8s_pod_name`
-  1. `rule`
+    1. `output_fields.k8s_pod_name` the Pod name that is triggering the Falco rule
+    1. `rule` the name of the rule getting triggered
+    1. `output` the full output of the event including details such as what commands are being run
 1. Those fields without a Pod name are from the Kubernetes audit trail and those with one is from the Node's syscalls. You can see more details for each one by expanding its carrot
 1. We can explore what we know happened with the following queries (replace what was in the search box with these and run them - ensuring that the timeframe still covers our activity to the right of it):
-  1. `kubernetes.namespace_name : "falco" and "nsenter"`
-    1. We can see that john is a "disallowed" K8s user calling the API. This Falco default has an allow-list of expected users. We'll need to tune that for our environment or turn it off - I'll show you how to do that in a second.
-    1. Then we can see the `Launch Privileged Container` (those privileges enabled us to escape the container later)
-    1. Then we can see that john did an `Attach/Exec into the Pod` (connected interactively) - Also note that, while the `Launch Privileged Container` was determined from the Node's Linux syscalls, that this was determined from the k8s_audit trail - and we see a combined/aggregated timeline of it all here.
-    1. Finally we see the `The docker client is executed in a container` that shows our `crictl` commands we were running
-  1. `kubernetes.namespace_name : "falco" and "terminal"`
-    1. Here is the `Terminal shell in container` we did to connect to the hello-client via crictl when we escaped onto the host
-  1. `kubernetes.namespace_name : "falco" and "playground"`
-    1. We see a `Read sensitive file untrusted` from the curl that read /etc/shadow
-    1. We see a `Launch Package Management Process in Container` where our curl download the `dig` from apt
-    1. Then we see the `Launch Suspicious Network Tool in Container` when we ran that `dig` against Kubernetes' DNS service discovery
-    1. Then we see a `Launch Ingress Remote File Copy Tool in Container` in response to a `curl` to download a script
-    1. And finally the `Detect crypto miners using the Stratum protocol` when that script attemped to launch crypto mining within our container exploiting our mock "zero day".
+    1. `kubernetes.namespace_name : "falco" and output_fields.k8s_ns_name : "security-playground"` to say we want to see logs from Falco relating to continers in the K8s namespace `security-playground. Here we see:
+        1. `Launch Privileged Container` which is one of the parameters that undermines container isolation so we could escape
+        1. `Read sensitive file untrusted` which was when we read /etc/shadow
+        1. `Write below binary dir` when we wrote a file to /bin
+        1. `Launch Package Management Process in Container` when we were apt install-ing things
+        1. `Launch Suspicious Network Tool in Container` when we did our dig against the K8s DNS service discovery
+        1. `Launch Ingress Remote File Copy Tools in Container` where we were curl-ing in our script to start the cyrpto miner
+        1. `Detect crypto miners using the Stratum protocol` (Note that you won't see this on ARM as the cypto miner we're using is Intel-only atm) our script launching a crypto miner
+        1. `The docker client is executed in a container` when we run `crictl` to manipulate the local container runtine circumventing K8s
+        1. Note that in the last docker client we see the psql being run which would tell us that data likely was exfiltrated here
+    1. `kubernetes.namespace_name : "falco" and output_fields.ka_user_name : "jane"` to say we want to see any Falco events where the user was jane
+        1. `Disallowed K8s User` reflects that jane isn't in a built-in allow list of users so any API call she makes (via the kubectl CLI) is captured here. We'll show you how to tune Falco so that it doesn't show you that in the next section.
 
 </details>
 
@@ -273,35 +291,18 @@ This change to non-root often requires rebuilding your container with a new Dock
 * nginx Dockerfile that runs as root - https://github.com/nginxinc/docker-nginx/blob/fef51235521d1cdf8b05d8cb1378a526d2abf421/mainline/debian/Dockerfile
 * nginx Dockerfile that creates a nginx user/group (UID and GID 101) and uses that instead - https://github.com/nginxinc/docker-nginx-unprivileged/blob/main/Dockerfile-debian.template
 
-### Scanning containers for vulnerabilities in your pipelines
+### (Optional) Scanning containers for vulnerabilities in your pipelines
 
-While there are many tools available for this, Docker has a partnership with Snyk and built this functionality right into the Docker CLI you most likely are using to build your containers today. As part of this there is a free tier which requires you to be logged in to Docker Hub to use it.
+While there are many tools available for this, Docker has a scan built-in to their CLI. Let's try using that one.
 
-NOTE: If you do not have a free Docker Hub login, and don't want to sign up for one now, then this section is optional. Just review the steps rather than going through them and then move on to the next section.
+NOTE: This won't run within your microk8s VM and instead needs to run on a machine with Docker installed.
 
-1. Run `cd ~/kubernetes-security-demos/demos/security-playground`
+1. Clone the repository if you haven't already on the machine Running Docker `git clone https://github.com/jasonumiker-sysdig/kubernetes-security-demos.git`
+1. Run `cd ~/kubernetes-security-demos/demos/security-playground` (assuming you cloned it to your home directory)
 1. Run `docker build -t security-playground:latest .`
-1. Create a free Docker Hub (https://hub.docker.com/) login if you do not already have one. Being signed into Docker CLI is also useful for increasing your limits to pull from Docker Hub (as they throttle authenticated free users less than anonymous ones on pulls).
-1. Run `docker login` to log in to the Docker CLI
-1. Run `docker scan security-playground:latest > scan-results.txt`. The first time that you do this it will ask if you consent to using Snyk - answer y.
-1. Run `cat scan-results.txt` and we see we have many vulnerabilities in this image. Look for a block like this at the bottom:
-    ```
-    Base Image              Vulnerabilities  Severity
-    python:3.7.15-bullseye  311              4 critical, 37 high, 26 medium, 244 low
+1. Run `docker scout cves security-playground:latest` as you can see there are many low severity vulnerabilities
+1. Run `docker scout cves security-playground:latest --only-severity "critical, high"` to filter out anything that isn't a critical or a high - and now (as of today) I don't see any.
 
-    Recommendations for base image upgrade:
-
-    Alternative image types
-    Base Image                 Vulnerabilities  Severity
-    python:3.7-slim-bullseye   48               0 critical, 0 high, 0 medium, 48 low
-    python:3.9-slim            48               0 critical, 0 high, 0 medium, 48 low
-    python:3.12-rc-slim        48               0 critical, 0 high, 0 medium, 48 low
-    python:3.7.15-slim-buster  70               0 critical, 2 high, 0 medium, 68 low
-    ```
-1. It gives us suggested changes to our base image to fix this - of these if we want to stay with the same version of Python (3.7) is `python:3.7-slim-bullseye`. Slim images have fewer things in them so, assuming we don't need something that isn't in slim (we'll need to test this still works to be sure), it makes sense it'll have fewer vulnerabilities too.
-1. Run `nano Dockerfile` and change `FROM python:3.7-bullseye` to `FROM python:3.7-slim-bullseye`
-1. Then rerun `docker build -t security-playground:latest .`
-1. And then `docker scan security-playground:latest > scan-results2.txt` and note that we have the fewer vulnerabilities we expected.
 
 ## NetworkPolicy Demo
 
