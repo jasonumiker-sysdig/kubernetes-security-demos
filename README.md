@@ -5,15 +5,12 @@ I've recorded the delivery of these demos and the associated presentation and up
 And these are demos of the topics discussed my recent blog post - https://sysdig.com/blog/multi-tenant-isolation-boundaries-kubernetes/
 
 ## Pre-requisites
-By default the VM running the microk8s Kubernetes as well as the associated tooling and the demo applications uses 4 vCPUs and 8GB of RAM. You can try to decrease this in the setup-cluster/setup-microk8s-vm.sh file, but below this I noticed some components are periodically restarted for failing probes etc. - especialy if you are running Elastic instead of Falcosidekick (as required on ARM) to inspect Falco's event logs.
-
+By default the VM running the microk8s Kubernetes as well as the associated tooling and the demo applications uses 2 vCPUs and 4GB of RAM.
 
 Mac:
 1. Install microk8s with a `brew install microk8s`
 1. Clone this repo - `git clone https://github.com/jasonumiker-sysdig/kubernetes-security-demos.git`
 1. Run `setup-cluster/setup-microk8s-vm.sh`
-
-NOTE: On an M1/M2 Mac the Falcosidekick UI is currently unsupported so the workshop substitutes in an Elastic/Kibana to see the Falco events instead.
 
 Windows:
 1. Be running a Pro or Enterprise version of Windows 10/11 that can do Hyper-V
@@ -186,43 +183,6 @@ There are actually two Falcos running - one watching the Linux kernel syscalls o
         1. `Disallowed K8s User` reflects that jane isn't in a built-in allow list of users so any API call she makes (via the kubectl CLI) is captured here. We'll show you how to tune Falco so that it doesn't show you that in the next section.
     1. (Optional) remove the search and/or go to the Dashboard tab to look around through the various other Events that Falco has caught during our session
 
-Alternatively, as the Falcosidekick UI doesn't yet work on the M1 Mac, you can use Elastic and Kibana to view the events. This is deployed by default instead of the non-working Falcosidekick UI when you use setup-microk8s-vm-arm.sh today. And, if you want both Falcosidekick UI as well as Elastic/Kibana, then you can deploy setup-microk8s-vm-with-elastic.sh.
-
-<details>
-  <summary>(For ARM machines where Falco Sidekick UI isn't yet working) Elastic & Kibana Instructions</summary>
-  
-1. Open Kibana by going to port http://(IP):30283 on your Node
-    1. If you are signed into a microk8s-vm on your Mac or Windows machine, you can run `kubectl get nodes -o wide` to find the IP address to use (the INTERNAL-IP)
-    1. If run in AWS then this will be the public IP of the EC2 instance
-1. Tick the Don't show again box and click the Dismiss button on the Your data is not secure box in the lower right
-1. Click the link to Explore on my own on the Welcome to Elastic screen
-1. Click the hamburger menu in the upper right and choose Discover under Analytics
-1. Click the button to Create index pattern
-1. In name type `logstash*`, pick @timestamp in the Timestamp field dropdown and then click the Create index pattern button
-1. Go back to the hamburger menu in the upper right and choose Discover under Analytics again
-1. In the search box type `kubernetes.namespace_name : "falco"` to show the logs from our two Falco agents (one for the Node syscalls and one for the Kubernetes audit trail)
-1. Make sure that the time range to the right of the search box we are looking at covers everything we've done today
-1. Click the carrot/arrow next to the top document and if you hover over Actions to the left of the each Field you'll see four options - Filter for, Filter out, Toggle column in table and Filter for field present. We want to show a few columns so click on Toggle column for these two Fields:
-    1. `output_fields.k8s_pod_name` the Pod name that is triggering the Falco rule
-    1. `rule` the name of the rule getting triggered
-    1. `output` the full output of the event including details such as what commands are being run
-1. Those fields without a Pod name are from the Kubernetes audit trail and those with one is from the Node's syscalls. You can see more details for each one by expanding its carrot
-1. We can explore what we know happened with the following queries (replace what was in the search box with these and run them - ensuring that the timeframe still covers our activity to the right of it):
-    1. `kubernetes.namespace_name : "falco" and output_fields.k8s_ns_name : "security-playground"` to say we want to see logs from Falco relating to continers in the K8s namespace `security-playground. Here we see:
-        1. `Launch Privileged Container` which is one of the parameters that undermines container isolation so we could escape
-        1. `Read sensitive file untrusted` which was when we read /etc/shadow
-        1. `Write below binary dir` when we wrote a file to /bin
-        1. `Launch Package Management Process in Container` when we were apt install-ing things
-        1. `Launch Suspicious Network Tool in Container` when we did our dig against the K8s DNS service discovery
-        1. `Launch Ingress Remote File Copy Tools in Container` where we were curl-ing in our script to start the cyrpto miner
-        1. `Detect crypto miners using the Stratum protocol` (Note that you won't see this on ARM as the cypto miner we're using is Intel-only atm) our script launching a crypto miner
-        1. `The docker client is executed in a container` when we run `crictl` to manipulate the local container runtine circumventing K8s
-        1. Note that in the last docker client we see the psql being run which would tell us that data likely was exfiltrated here
-    1. `kubernetes.namespace_name : "falco" and output_fields.ka_user_name : "jane"` to say we want to see any Falco events where the user was jane
-        1. `Disallowed K8s User` reflects that jane isn't in a built-in allow list of users so any API call she makes (via the kubectl CLI) is captured here. We'll show you how to tune Falco so that it doesn't show you that in the next section.
-
-</details>
-
 #### Falco Tuning
 
 Nearly all of the Falco rules will have an "escape hatch" list or macro where you can allow-list those things (namespaces, or user or container names etc.) that should be excluded from the rule firing. This is especially true for those Rules that say "disallowed" such as `Disallowed K8s User` and `Create Disallowed Namespace`
@@ -297,7 +257,7 @@ While there are many tools available for this, Docker has a scan built-in to the
 
 NOTE: This won't run within your microk8s VM and instead needs to run on a machine with Docker installed.
 
-1. Clone the repository if you haven't already on the machine Running Docker `git clone https://github.com/jasonumiker-sysdig/kubernetes-security-demos.git`
+1. Clone the repository if you haven't already on the machine running Docker `git clone https://github.com/jasonumiker-sysdig/kubernetes-security-demos.git`
 1. Run `cd ~/kubernetes-security-demos/demos/security-playground` (assuming you cloned it to your home directory)
 1. Run `docker build -t security-playground:latest .`
 1. Run `docker scout cves security-playground:latest` as you can see there are many low severity vulnerabilities

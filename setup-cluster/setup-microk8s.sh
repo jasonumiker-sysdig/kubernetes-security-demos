@@ -28,24 +28,8 @@ microk8s.config | cat - > /root/.kube/config
 # Install Falco
 helm repo add falcosecurity https://falcosecurity.github.io/charts
 helm repo update
-# If we are running on ARM then launch with the arm values.yamls otherwise the 'normal' ones
-if [[ $ARCH == "arm64" ]]; then
-    helm install falco falcosecurity/falco --namespace falco --create-namespace -f falco-values-arm.yaml --kubeconfig /root/.kube/config
-    helm install falco-k8saudit falcosecurity/falco --namespace falco --create-namespace -f falco-k8saudit-values-arm.yaml --kubeconfig /root/.kube/config
-else
-    helm install falco falcosecurity/falco --namespace falco --create-namespace -f falco-values.yaml --kubeconfig /root/.kube/config
-    helm install falco-k8saudit falcosecurity/falco --namespace falco --create-namespace -f falco-k8saudit-values.yaml --kubeconfig /root/.kube/config
-fi
-
-# Install Elasticsearch (as alternative for FalcosidekickUI) on ARM
-if [[ $ARCH == "arm64" ]]; then
-    helm repo add elastic https://helm.elastic.co
-    helm repo add fluent https://fluent.github.io/helm-charts
-    helm repo update
-    helm install elasticsearch elastic/elasticsearch -n monitoring --create-namespace -f elastic-values.yaml --version 7.17.3 --wait
-    helm install fluent-bit fluent/fluent-bit -n monitoring -f fluentbit-values.yaml
-    helm install kibana elastic/kibana -n monitoring --set service.type=NodePort --set service.nodePort=30283 --version 7.17.3
-fi
+helm install falco falcosecurity/falco --namespace falco --create-namespace -f falco-values.yaml --kubeconfig /root/.kube/config
+helm install falco-k8saudit falcosecurity/falco --namespace falco --create-namespace -f falco-k8saudit-values.yaml --kubeconfig /root/.kube/config
 
 # Set up multi-tenancy
 # Create token for Jane to access team1
