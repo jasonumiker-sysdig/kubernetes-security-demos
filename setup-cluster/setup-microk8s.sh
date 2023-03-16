@@ -2,14 +2,14 @@
 # NOTE: Run this with sudo
 
 # Install microk8s on it
-snap install microk8s --channel=1.24-eksd/stable --classic
+snap install microk8s --channel=1.25/stable --classic
 
 # Enable CoreDNS, RBAC, hostpath-storage, ingress
 microk8s enable dns rbac hostpath-storage
 microk8s status --wait-ready
 
 # Install kubectl in microk8s-vm
-snap install kubectl --channel 1.24/stable --classic
+snap install kubectl --channel 1.25/stable --classic
 
 # Install helm in microk8s-vm
 snap install helm --classic
