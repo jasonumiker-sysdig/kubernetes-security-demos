@@ -94,7 +94,7 @@ To illustrate the worst-case-scenario of that we have the simplest and least sec
 1. `cd ~/kubernetes-security-demos/demos/security-playground`
 1. `cat app.py` - we can see just see just how simple this Python app is - it'll read any file you ask it to with a RESTful GET, write any file you ask it to with a RESTful POST and even execute any file you want it to with a POST to the /exec URI path.
 1. `cat example-curls.sh` Since this is just REST we can do these exploits with just `curl` commands.
-1. `kubectl config use-context microk8s` - Let's go back to our admin role (to allow our kubectl get nodes to work)
+1. `kubectl config use-context microk8s` - Let's go back to our admin Kubernetes ClusterRole
 1. `kubectl apply -f ../data-exfil-postgres/postgres-sakila.yaml` to deploy a sample database for us to try to exfiltrate data from using this example vulnerability
 1. `kubectl apply -f security-playground.yaml` to deploy security-playground
 1. `kubectl get pods -n security-playground` - keep running this until our Pod has come up
@@ -116,7 +116,7 @@ We'll see in a future section that Falco recorded this nefarious runtime behavio
 ### Escaping container to open an interactive nsenter shell on the host
 We can also use kubectl exec interactively (the -it) option to leverage that same container escape approach as a sort of "ssh to the host as root". This is showing how an external or even inside threat actor can take some access to the cluster with kubectl conmbined with insecure options in the PodSpec to break out of their container and get privilege escalation.
 
-1. `kubectl config get-contexts` - Confirming we are still signed in as John who should be limited to the team2 namespace (as we gave him a Role there rather than a ClusterRole)
+1. `kubectl config use-context microk8s-john` - Sign back in as John who should be limited to the team2 namespace (as we gave him a Role there rather than a ClusterRole)
 1. `kubectl describe secret hello-secret -n team1` - as expected we can't get at team1's secrets as john (as he only has access to team2's namespace)
 1. `cd ~/kubernetes-security-demos/demos`
 1. `cat nsenter-node.sh` - as we said you can ask for some things in your Podspecs such as hostPID and a privileged security context that allow you to break out of the Linux namespace boundaries of containers. This asks for those things and then runs a tool called ns-enter to leave our Linux namespace for the host one. This should result in us having an interactive shell to the Kubernetes Node and as root.
@@ -138,6 +138,7 @@ So even though we properly set up our Kubernetes RBAC and Namespaces this host-l
 The answer to this problem is the OPA Gatekeeper admission controller preventing me asking for those insecure parameters in my nsenter Podspec. This isn't there by default though in most clusters - even things like AWS EKS, Google GKE or MS AKS. Though in some you can opt-in to them. One way or the other if you are doing multi-tenancy you need to ensure you have it.
 
 1. `cd ~/kubernetes-security-demos/opa-gatekeeper`
+1. `kubectl config use-context microk8s` to sign back in as our admin ClusterRole (we'll need this to install Gatekeeper)
 1. `cat ./install-gatekeeper.sh` - this script will install the OPA Gatekeeper Helm chart and then a few policies for it to enforce (which are in the form of Kubernetes custom resource definition (CRD) files/objects) that will do just that
 1. `./install-gatekeeper.sh` - let's run it
 1. `cd ~/kubernetes-security-demos/demos` - Okay now lets try our nsenter again
