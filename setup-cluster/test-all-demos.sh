@@ -51,10 +51,10 @@ echo "--------------------"
 kubectl config use-context microk8s
 echo "--------------------"
 kubectl apply -f ../data-exfil-postgres/postgres-sakila.yaml
-sleep 60
+sleep 20
 echo "--------------------"
 kubectl apply -f security-playground.yaml
-sleep 60
+sleep 20
 echo "--------------------"
 kubectl get pods -n security-playground
 echo "--------------------"
