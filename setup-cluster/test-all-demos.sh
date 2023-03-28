@@ -3,7 +3,7 @@
 # well as to trigger all of the associated Events in Falco
 
 # Wait for falco agent to be up before proceeding
-kubectl wait daemonset -n falco falco --for condition=Available=True --timeout=90s
+kubectl rollout status daemonset falco -n falco --timeout 90s
 
 # Kubernetes Namespace and RBAC Demo
 kubectl get pods -A
@@ -69,7 +69,6 @@ cd ~/kubernetes-security-demos/demos/opa-gatekeeper
 cat ./install-gatekeeper.sh
 echo "--------------------"
 ./install-gatekeeper.sh
-kubectl wait deployment -n gatekeeper-system gatekeeper-controller-manager --for condition=Available=True --timeout=90s
 echo "--------------------"
 cd ~/kubernetes-security-demos/demos
 ./nsenter-node.sh
