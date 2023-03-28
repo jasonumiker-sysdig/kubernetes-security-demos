@@ -11,10 +11,8 @@ falcosidekick:
     enabled: true
     service:
       type: NodePort
-  config:
-    elasticsearch:
-      #Uncomment if deploying Elasticsearch to the cluster
-      #hostport: http://elasticsearch-master.monitoring.svc.cluster.local:9200
+    replicaCount: 1
+  replicaCount: 1
 tty: true
 loader:
 customRules:
