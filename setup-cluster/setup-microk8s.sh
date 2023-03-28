@@ -19,7 +19,7 @@ ARCH=$(dpkg --print-architecture)
 wget -q https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.25.0/crictl-v1.25.0-linux-$ARCH.tar.gz
 tar zxvf crictl-v1.25.0-linux-$ARCH.tar.gz -C /usr/local/bin
 rm -f crictl-v1.25.0-linux-$ARCH.tar.gz
-echo "runtime-endpoint: unix:///var/run/containerd/containerd.sock" > /etc/crictl.yaml
+echo "runtime-endpoint: unix:///var/snap/microk8s/common/run/containerd.sock" > /etc/crictl.yaml
 
 # Set up the kubeconfig
 mkdir /root/.kube
