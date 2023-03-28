@@ -65,7 +65,7 @@ echo "--------------------"
 echo "--------------------"
 
 # OPA Gatekeeper
-cd ~/kubernetes-security-demos/opa-gatekeeper
+cd ~/kubernetes-security-demos/demos/opa-gatekeeper
 cat ./install-gatekeeper.sh
 echo "--------------------"
 ./install-gatekeeper.sh
@@ -73,7 +73,7 @@ echo "--------------------"
 cd ~/kubernetes-security-demos/demos
 ./nsenter-node.sh
 echo "--------------------"
-cd ~/kubernetes-security-demos/opa-gatekeeper
+cd ~/kubernetes-security-demos/demos/opa-gatekeeper
 ./uninstall-gatekeeper.sh
 echo "--------------------"
 

@@ -137,15 +137,15 @@ So even though we properly set up our Kubernetes RBAC and Namespaces this host-l
 ### Open Policy Agent (OPA) Gatekeeper
 The answer to this problem is the OPA Gatekeeper admission controller preventing me asking for those insecure parameters in my nsenter Podspec. This isn't there by default though in most clusters - even things like AWS EKS, Google GKE or MS AKS. Though in some you can opt-in to them. One way or the other if you are doing multi-tenancy you need to ensure you have it.
 
-1. `cd ~/kubernetes-security-demos/opa-gatekeeper`
+1. `cd ~/kubernetes-security-demos/demos/opa-gatekeeper`
 1. `kubectl config use-context microk8s` to sign back in as our admin ClusterRole (we'll need this to install Gatekeeper)
 1. `cat ./install-gatekeeper.sh` - this script will install the OPA Gatekeeper Helm chart and then a few policies for it to enforce (which are in the form of Kubernetes custom resource definition (CRD) files/objects) that will do just that
 1. `./install-gatekeeper.sh` - let's run it
 1. `cd ~/kubernetes-security-demos/demos` - Okay now lets try our nsenter again
 1. `./nsenter-node.sh` - As you can see we now have OPA Gatekeeper policies blocking all the insecure options nsenter was asking for that allowed us to peform our escape - so that Pod is no longer allowed to launch. I am protected by this new admission controller!
-1. `cd ~/kubernetes-security-demos/opa-gatekeeper/policies/constraint-templates/` then `cat` the various files in here to look at the policies (called constraint-templates) that made that possible
-1. `cd ~/kubernetes-security-demos/opa-gatekeeper/policies/constraints` then `cat` the various files in here - while the previous constraint-templates are the polices constraints say when - and when not to - apply those policies. So constraint-templates are not enforced until a constraint says where and/or where not to apply it.
-1. `cd ~/kubernetes-security-demos/opa-gatekeeper`
+1. `cd ~/kubernetes-security-demos/demos/opa-gatekeeper/policies/constraint-templates/` then `cat` the various files in here to look at the policies (called constraint-templates) that made that possible
+1. `cd ~/kubernetes-security-demos/demos/opa-gatekeeper/policies/constraints` then `cat` the various files in here - while the previous constraint-templates are the polices constraints say when - and when not to - apply those policies. So constraint-templates are not enforced until a constraint says where and/or where not to apply it.
+1. `cd ~/kubernetes-security-demos/demos/opa-gatekeeper`
 1. `./uninstall-gatekeeper.sh` - removing Gatekeeper for a future demo to work though
 
 These actually came from the Gatekeeper library on Github where there are a number of additional examples here - https://github.com/open-policy-agent/gatekeeper-library/tree/master/library
