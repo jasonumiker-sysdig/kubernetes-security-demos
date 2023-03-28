@@ -69,6 +69,7 @@ cd ~/kubernetes-security-demos/demos/opa-gatekeeper
 cat ./install-gatekeeper.sh
 echo "--------------------"
 ./install-gatekeeper.sh
+kubectl wait deployment -n gatekeeper-system gatekeeper-controller-manager --for condition=Available=True --timeout=90s
 echo "--------------------"
 cd ~/kubernetes-security-demos/demos
 ./nsenter-node.sh
