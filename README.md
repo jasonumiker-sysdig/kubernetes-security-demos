@@ -134,9 +134,14 @@ We can also use kubectl exec interactively (the -it) option to leverage that sam
 So even though we properly set up our Kubernetes RBAC and Namespaces this host-level container isolation let us down as people who can launch a pod in one namespace with those defaults can 'own' the Node and everything running on it - even if those things are from a different Namespace.
 
 
-### Open Policy Agent (OPA) Gatekeeper
-The answer to this problem is the OPA Gatekeeper admission controller preventing me asking for those insecure parameters in my nsenter Podspec. This isn't there by default though in most clusters - even things like AWS EKS, Google GKE or MS AKS. Though in some you can opt-in to them. One way or the other if you are doing multi-tenancy you need to ensure you have it.
+### Open Policy Agent (OPA) Gatekeeper and Pod Security Admission (PSA)
+The answer to this problem is by adding an admission controller to prevent users asking for those insecure parameters in their Podspecs. There traditionally hasn't been one there by default in most K8s offerings - even things like AWS EKS, Google GKE or MS AKS. Though this may improve now that Pod Security Admission (PSAs) have gone GA in Kubernetes 1.25.
 
+What people have usually done up until now is leverage another CNCF project, Open Policy Agent (OPA) and their Gatekeeper to achieve this. the new PSA approach is less flexible but much easier - and built into Kubernetes now. We'll look at both.
+
+One way or the other, though, if you are doing multi-tenancy you need to ensure you have one of them.
+
+#### Open Policy Agent (OPA) Gatekeeper
 1. `cd ~/kubernetes-security-demos/demos/opa-gatekeeper`
 1. `kubectl config use-context microk8s` to sign back in as our admin ClusterRole (we'll need this to install Gatekeeper)
 1. `cat ./install-gatekeeper.sh` - this script will install the OPA Gatekeeper Helm chart and then a few policies for it to enforce (which are in the form of Kubernetes custom resource definition (CRD) files/objects) that will do just that
@@ -151,6 +156,31 @@ The answer to this problem is the OPA Gatekeeper admission controller preventing
 These actually came from the Gatekeeper library on Github where there are a number of additional examples here - https://github.com/open-policy-agent/gatekeeper-library/tree/master/library
 
 Also there is a good tool to test out your Rego (OPA's declarative language for policies) here - https://play.openpolicyagent.org/
+
+### (Newly GA in Kubernetes 1.25) Pod Security Admission
+Kubernetes now has a default way to handle this - [Pod Security Admission](https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-namespace-labels/). The way that this works is that you put labels on your namespace(s) to tell it which of three [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/) (privileged, baseline or restrictive) that you want to either warn about or enforce on that Namespace.
+
+The way that we'd block nsenter or security-playground from allowing escaping of the container namespace would be to run the following command to add the label to the relevant namespace:
+```
+kubectl label --overwrite ns security-playground \
+  pod-security.kubernetes.io/enforce=baseline \
+  pod-security.kubernetes.io/warn=baseline
+```
+
+After running that command note the following output:
+```
+Warning: existing pods in namespace "security-playground" violate the new PodSecurity enforce level "baseline:v1.25"
+Warning: security-playground-55f8dd8c4b-x8266: host namespaces, privileged
+namespace/security-playground labeled
+```
+
+Note that if we had just specified the enforce without also specifying the warn we won't get warnings like this on the commandline.
+
+Since the pod is already running it wasn't stopped - but any replacement Pods won't be able to launch. To see that run `kubectl rollout restart deployment security-playground -n security-playground`. Note it warned us yet again that this is going to be blocked (since we are enforcing it). If you run `kubectl get events -n security-playground` you'll see the ReplicaSet failing to launch the replacement Pod due to it having insecure options that don't meet the baseline.
+
+The baseline security standard is a good balance between allowing the default options in a minimal PodSpec yet blocking the ones that are most likley to lead to security issues. The restricted one goes much further but will likely require changes to the PodSpecs, and maybe the apps, for them to be allowed to deploy.
+
+See the links above to learn more about the labels and the standards you can enforce this way.
 
 ### Kubebench
 In addition to OPA Gatekeeper, which can block things like the insecure options in your PodSpecs, there are some free opensource tools like [kubebench](https://github.com/aquasecurity/kube-bench) that can scan your cluster's posture against things like the CIS Benchmark. The CIS benchmark covers not just those options but many other aspects of cluster security.
