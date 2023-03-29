@@ -177,6 +177,9 @@ namespace/security-playground labeled
 Note that if we had just specified the enforce without also specifying the warn we won't get warnings like this on the commandline.
 
 Since the pod is already running it wasn't stopped - but any replacement Pods won't be able to launch. To see that run `kubectl rollout restart deployment security-playground -n security-playground`. Note it warned us yet again that this is going to be blocked (since we are enforcing it). If you run `kubectl get events -n security-playground` you'll see the ReplicaSet failing to launch the replacement Pod due to it having insecure options that don't meet the baseline.
+```
+36s         Warning   FailedCreate        replicaset/security-playground-659bcf8f66   (combined from similar events): Error creating: pods "security-playground-659bcf8f66-vdg5n" is forbidden: violates PodSecurity "baseline:v1.25": host namespaces (hostPID=true), privileged (container "security-playground" must not set securityContext.privileged=true)
+```
 
 The baseline security standard is a good balance between allowing the default options in a minimal PodSpec yet blocking the ones that are most likley to lead to security issues. The restricted one goes much further but will likely require changes to the PodSpecs, and maybe the apps, for them to be allowed to deploy.
 
