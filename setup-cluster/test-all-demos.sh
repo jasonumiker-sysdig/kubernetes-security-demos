@@ -77,8 +77,22 @@ cd ~/kubernetes-security-demos/demos/opa-gatekeeper
 ./uninstall-gatekeeper.sh
 echo "--------------------"
 
+# PSAs
+kubectl label --overwrite ns security-playground pod-security.kubernetes.io/enforce=baseline pod-security.kubernetes.io/warn=baseline
+echo "--------------------"
+kubectl label --overwrite ns default pod-security.kubernetes.io/enforce=baseline pod-security.kubernetes.io/warn=baseline
+echo "--------------------"
+kubectl rollout restart deployment security-playground -n security-playground
+echo "--------------------"
+kubectl get events -n security-playground
+echo "--------------------"
+~/kubernetes-security-demos/demos/nsenter-node.sh
+echo "--------------------"
+
 #Kubebench
 cd ~/kubernetes-security-demos/demos
+echo "--------------------"
+kubectl label namespaces default pod-security.kubernetes.io/enforce-
 echo "--------------------"
 kubectl apply -f kubebench-job.yaml
 echo "--------------------"
@@ -91,7 +105,7 @@ echo "--------------------"
 kubectl logs deployment/hello-client-blocked -n team1
 echo "--------------------"
 cd ~/kubernetes-security-demos/demos/network-policy/hello-app
-kubectl apply -f  hello-client.yaml -n team2
+kubectl apply -f hello-client.yaml -n team2
 echo "--------------------"
 kubectl logs deployment/hello-client-allowed -n team2
 echo "--------------------"

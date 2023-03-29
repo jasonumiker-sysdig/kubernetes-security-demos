@@ -165,6 +165,9 @@ The way that we'd block nsenter or security-playground from allowing escaping of
 kubectl label --overwrite ns security-playground \
   pod-security.kubernetes.io/enforce=baseline \
   pod-security.kubernetes.io/warn=baseline
+kubectl label --overwrite ns default \
+  pod-security.kubernetes.io/enforce=baseline \
+  pod-security.kubernetes.io/warn=baseline
 ```
 
 After running that command note the following output:
@@ -181,6 +184,8 @@ Since the pod is already running it wasn't stopped - but any replacement Pods wo
 36s         Warning   FailedCreate        replicaset/security-playground-659bcf8f66   (combined from similar events): Error creating: pods "security-playground-659bcf8f66-vdg5n" is forbidden: violates PodSecurity "baseline:v1.25": host namespaces (hostPID=true), privileged (container "security-playground" must not set securityContext.privileged=true)
 ```
 
+You can also now try running `~/kubernetes-security-demos/demos/nsenter-node.sh` again and see it gets blocked too.
+
 The baseline security standard is a good balance between allowing the default options in a minimal PodSpec yet blocking the ones that are most likley to lead to security issues. The restricted one goes much further but will likely require changes to the PodSpecs, and maybe the apps, for them to be allowed to deploy.
 
 See the links above to learn more about the labels and the standards you can enforce this way.
@@ -190,6 +195,7 @@ In addition to OPA Gatekeeper, which can block things like the insecure options 
 
 To see this in action:
 1. `cd ~/kubernetes-security-demos/demos`
+1. `kubectl label namespaces default pod-security.kubernetes.io/enforce-` to remove our baseline PSA on the default namespace if it still is on there (this requires privileges to run beyond baseline)
 1. `kubectl apply -f kubebench-job.yaml` to deploy a one-time job to scan your cluster. You could change this job's Kubernetes spec to run regularly if you wanted.
 1. `kubectl logs job/kube-bench` to have a look at the results
 
