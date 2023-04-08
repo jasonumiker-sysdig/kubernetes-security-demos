@@ -79,3 +79,5 @@ cp ./kube-apiserver /var/snap/microk8s/current/args/
 chown root:microk8s /var/snap/microk8s/current/args/kube-apiserver
 microk8s stop
 microk8s start
+sleep 30
+kubectl rollout status daemonset falco -n falco --timeout 300s

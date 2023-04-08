@@ -3,7 +3,7 @@
 # well as to trigger all of the associated Events in Falco
 
 # Wait for falco agent to be up before proceeding
-kubectl rollout status daemonset falco -n falco --timeout 90s
+kubectl rollout status daemonset falco -n falco --timeout 300s
 
 # Kubernetes Namespace and RBAC Demo
 kubectl get pods -A
@@ -54,10 +54,10 @@ echo "--------------------"
 kubectl config use-context microk8s
 echo "--------------------"
 kubectl apply -f ../data-exfil-postgres/postgres-sakila.yaml
-kubectl wait deployment -n postgres-sakila postgres-sakila-deployment --for condition=Available=True --timeout=90s
+kubectl wait deployment -n postgres-sakila postgres-sakila-deployment --for condition=Available=True --timeout=300s
 echo "--------------------"
 kubectl apply -f security-playground.yaml
-kubectl wait deployment -n security-playground security-playground --for condition=Available=True --timeout=90s
+kubectl wait deployment -n security-playground security-playground --for condition=Available=True --timeout=300s
 echo "--------------------"
 kubectl get pods -n security-playground
 echo "--------------------"
