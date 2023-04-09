@@ -4,24 +4,11 @@ By Jason Umiker (jason.umiker@sysdig.com)
 """
 
 from constructs import Construct
-from aws_cdk import App, RemovalPolicy, Stack, Environment
+from aws_cdk import App, Stack, Environment
 from aws_cdk import (
     aws_ec2 as ec2,
     aws_iam as iam,
-    aws_cloudtrail as cloudtrail
 )
-
-# Create a CloudTrail and S3 bucket to store it
-class CloudTrailStack(Stack):
-
-    def __init__(self, scope: Construct, id: str, **kwargs) -> None:
-        super().__init__(scope, id, **kwargs)
-
-        # Create our cloudtrail (which by default will create a new S3 bucket)
-        trail = cloudtrail.Trail(self, "CloudTrail")
-
-        # Apply a removal policy to delete everything if this stack is deleted
-        trail.apply_removal_policy(RemovalPolicy.DESTROY)
 
 # Create a Stack for our single VPC that'll host everything
 class VPCStack(Stack):
@@ -136,8 +123,6 @@ app = App()
 # Get account and region from cdk.json
 account = app.node.try_get_context("account")
 region = app.node.try_get_context("region")
-# Create our single shared CloudTrail Stack
-cloudtrail_stack = CloudTrailStack(app, "CloudTrailStack", env=Environment(account=account, region=region))
 # Create our single shared VPC
 vpc_stack = VPCStack(app, "VPCStack", env=Environment(account=account, region=region))
 # Loop through creating all our Attendee stacks
