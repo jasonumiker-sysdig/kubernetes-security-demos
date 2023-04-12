@@ -23,7 +23,7 @@ spec:
       hostPID: true
       containers:
         - name: security-playground
-          image: jasonumiker/security-playground:latest
+          image: jasonumiker/security-playground:120423
           ports:
             - name: http
               containerPort: 8080
