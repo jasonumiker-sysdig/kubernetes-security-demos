@@ -5,14 +5,14 @@ I've recorded the delivery of these demos and the associated presentation and up
 And these are demos of the topics discussed my recent blog post - https://sysdig.com/blog/multi-tenant-isolation-boundaries-kubernetes/
 
 ## Pre-requisites
-By default the VM running the microk8s Kubernetes as well as the associated tooling and the demo applications uses 2 vCPUs and 4GB of RAM.
+By default the VM running the microk8s Kubernetes as well as the associated tooling and demo applications uses 2 vCPUs and 4GB of RAM.
 
-Mac:
+Mac (via a VM managed by multipass):
 1. Install microk8s with a `brew install microk8s`
 1. Clone this repo - `git clone https://github.com/jasonumiker-sysdig/kubernetes-security-demos.git`
 1. Run `setup-cluster/setup-microk8s-vm.sh`
 
-Windows:
+Windows (via a VM managed by multipass):
 1. Be running a Pro or Enterprise version of Windows 10/11 that can do Hyper-V
 1. Install microk8s - https://microk8s.io/docs/install-windows
 1. Install git - https://gitforwindows.org/
@@ -25,39 +25,13 @@ Linux (via a VM managed by multipass):
 1. Clone this repo - `git clone https://github.com/jasonumiker-sysdig/kubernetes-security-demos.git`
 1. Run `setup-cluster/setup-microk8s-vm.sh`
 
-AWS:
-1. Install node.js, npm, python3, pip3 and the AWS CLI 
-    1. Mac
-      1. Install Homebrew (if not already installed) - `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
-      1. Run `brew install node@18 python@3.11 awscli`
-    1. Ubuntu (including via WSL) - `sudo apt update;sudo apt install -y nodejs npm python3-pip`
-1. cd `setup-cluster/aws-cdk`
-1. Edit cdk.json and enter the AWS account number, region and the number of attendees that you'd like
-1. Run `npm install`
-1. Run `pip3 install -r requirements.txt`
-1. Run `npx cdk bootstrap` (once per account)
-1. Run `npx cdk deploy --all`
-1. And once that's done run `./set-iam-user-passwords.sh` to set a password on all the IAM users which it exports out to workshop-passwords.csv
-
-To clean up / destroy all the environment(s) when done:
-1. Run `./delete-iam-user-passwords.sh` to remove the login profile and console access from the IAM users
-1. Run `npx cdk destroy -all` to delete all the CloudFormation Stacks
-
-## Signing in if the environment is in a local VM
+## Signing in to the environment
 1. Run `multipass shell microk8s-vm`
 
 Here are some other useful commands to manage that VM once it exists:
 * `multipass stop microk8s-vm` - shut the VM down
 * `multipass start microk8s-vm` - start it up
 * `multipass delete microk8s-vm && multipass purge` - delete and then purge the VM
-
-## Signing in if the environment is in AWS
-1. Go to https://console.aws.amazon.com/
-1. Retrieve your IAM Username and Password from workshop-passwords.csv or from the person who created the environments (who has it)
-1. Go to the EC2 Console
-1. Tick the box next to the instance named the same as your username and then click the Connect button
-1. Pick the Session Manager tab then click the Connect button
-1. `sudo su ubuntu` then `cd ~` as all the tooling was installed for the ubuntu user (not the ssm-user)
 
 ## Kubernetes Namespace and RBAC Demo
 1. `kubectl get pods -A` - We are currently signed in as the admin ClusterRole - we can do anything cluster-wide
