@@ -96,6 +96,7 @@ kubectl label namespaces default pod-security.kubernetes.io/enforce-
 echo "--------------------"
 kubectl apply -f kubebench-job.yaml
 echo "--------------------"
+kubectl wait job/kube-bench --for condition=complete
 kubectl logs job/kube-bench
 
 # NetworkPolicy Demo
@@ -106,6 +107,8 @@ kubectl logs deployment/hello-client-blocked -n team1
 echo "--------------------"
 cd ~/kubernetes-security-demos/demos/network-policy/hello-app
 kubectl apply -f hello-client.yaml -n team2
+kubectl wait deployment -n team2 hello=client-allowed --for condition=Available=True --timeout=300s
+kubectl wait deployment -n team2 hello=client-blocked --for condition=Available=True --timeout=300s
 echo "--------------------"
 kubectl logs deployment/hello-client-allowed -n team2
 echo "--------------------"
