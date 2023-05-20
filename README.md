@@ -96,7 +96,8 @@ We can also use kubectl exec interactively (the -it) option to leverage that sam
 1. `kubectl config use-context microk8s-john` - Sign back in as John who should be limited to the team2 namespace (as we gave him a Role there rather than a ClusterRole)
 1. `kubectl describe secret hello-secret -n team1` - as expected we can't get at team1's secrets as john (as he only has access to team2's namespace)
 1. `cd ~/kubernetes-security-demos/demos`
-1. `cat nsenter-node.sh` - as we said you can ask for some things in your Podspecs such as hostPID and a privileged security context that allow you to break out of the Linux namespace boundaries of containers. This asks for those things and then runs a tool called ns-enter to leave our Linux namespace for the host one. This should result in us having an interactive shell to the Kubernetes Node and as root.
+1. `cat nsenter-node.sh` - as we said you can ask for some things in your Podspecs such as hostPID and a privileged security context that allow you to break out of the Linux namespace boundaries of containers. This asks for those things and then runs a tool called ns-enter to leave our Linux namespace for the host one. This should result in us having an interactive shell to the Kubernetes Node and as root.  
+    1. NOTE: If we had not allowed `kubectl exec` for John in team2 then this also would have been blocked by that. Since we don't allow that for Jane anymore she couldn't do this. So RBAC plays a role here too...
 1. `./nsenter-node.sh` - and there we go - we're now root@microk8s-vm which is our Kubernetes Node
 1. `ps aux` - when you are root in the host's Linux namespace you can see all the processes in all the containers
 1. `crictl ps` - and, worse than that, I can connect to the container runtime that Kubernetes manages directly (bypassing Kubernetes entirely) with the crictl command
