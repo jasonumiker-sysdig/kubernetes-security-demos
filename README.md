@@ -51,6 +51,9 @@ Here are some other useful commands to manage that VM once it exists:
 1. `kubectl apply -f .` - Let's deploy an app to our namespace
 1. `kubectl get pods` - As you can see we do have enough cluster access to deploy workloads within our team1 namespace
 1. `kubectl describe deployments hello-client-allowed` - Note under Pod Template -> Environment that a Kubernetes secret (hello-secret) is getting mounted as the environment variable API_KEY at runtime
+1. `kubectl exec -it deploy/hello-client-allowed -n team1 -- /bin/sh` then `whoami` then `exit` - We can connect interactively into our Pods with the * admin privileges of our Role
+1. `kubectl apply -f ../../../team1-noexec.yaml` - If we set our Role to the those 315 explicit lines above but with the pod/execs commented out then that will block us from being able to do this.
+1. `kubectl exec -it deploy/hello-client-allowed -n team1 -- /bin/sh` - trying it again you'll see that it is blocked
 1. Now lets flip to John who is restricted to the team2 namespace
 1. `kubectl config use-context microk8s-john`
 1. `kubectl get pods` - we don't have any workloads deployed here yet

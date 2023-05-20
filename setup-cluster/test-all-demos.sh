@@ -34,6 +34,12 @@ kubectl get pods
 echo "--------------------"
 kubectl describe deployments hello-client-allowed
 echo "--------------------"
+kubectl exec deploy/hello-client-allowed -n team1 -- echo "I execed into the Pod"
+echo "--------------------"
+kubectl apply -f ../../../team1-noexec.yaml
+echo "--------------------"
+kubectl exec deploy/hello-client-allowed -n team1 -- echo "I execed into the Pod"
+echo "--------------------"
 kubectl config use-context microk8s-john
 echo "--------------------"
 kubectl get pods
