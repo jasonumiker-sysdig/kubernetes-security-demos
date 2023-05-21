@@ -30,7 +30,7 @@ Linux (via a VM managed by multipass):
 
 OR
 
-* Run `cd ~/.kube` and `multipass transfer microk8s-vm:/home/ubuntu/.kube/config config` to copy the Kubeconfig to your host. If you have installed kubectl and cloned the git repo to the host then you can run the commands from there rather than a shell with the VM as well.
+* Run `cd ~/.kube` and `multipass transfer microk8s-vm:/home/ubuntu/.kube/config config` to copy the Kubeconfig to your host. If you have installed `kubectl` and also `git cloned` this git repo to the host in your home directory then you can run the commands from there rather than a shell within the VM.
 
 Here are some other useful commands to manage that VM once it exists:
 * `multipass stop microk8s-vm` - shut the VM down
