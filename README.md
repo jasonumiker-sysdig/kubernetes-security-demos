@@ -269,6 +269,8 @@ This change to non-root often requires rebuilding your container with a new Dock
 * nginx Dockerfile that runs as root - https://github.com/nginxinc/docker-nginx/blob/fef51235521d1cdf8b05d8cb1378a526d2abf421/mainline/debian/Dockerfile
 * nginx Dockerfile that creates a nginx user/group (UID and GID 101) and uses that instead - https://github.com/nginxinc/docker-nginx-unprivileged/blob/main/Dockerfile-debian.template
 
+For more on some of the challanges of getting containers to run non-root on Kubernetes - and how to overcome them - this great recent Kubecon talk is worth a watch https://youtu.be/uouH9fsWVIE.
+
 ### (Optional) Scanning containers for vulnerabilities in your pipelines
 
 While there are many tools available for this, Docker has a scan built-in to their CLI. Let's try using that one.
