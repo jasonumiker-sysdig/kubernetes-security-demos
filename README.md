@@ -26,7 +26,9 @@ Linux (via a VM managed by multipass):
 1. Run `setup-cluster/setup-microk8s-vm.sh`
 
 ## Signing in to the environment
-1. Run `multipass shell microk8s-vm`
+Run `multipass shell microk8s-vm`
+OR
+Run `cd ~/.kube` and `multipass transfer microk8s-vm:/home/ubuntu/.kube/config config` to copy the Kubeconfig to your host. If you have installed kubectl and cloned the git repo to the host then you can run the commands from there rather than a shell with the VM as well.
 
 Here are some other useful commands to manage that VM once it exists:
 * `multipass stop microk8s-vm` - shut the VM down
