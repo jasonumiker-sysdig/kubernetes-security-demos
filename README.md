@@ -201,69 +201,7 @@ There are actually two Falcos running - one watching the Linux kernel syscalls o
         1. `Detect crypto miners using the Stratum protocol` (Note that you won't see this on ARM as the cypto miner we're using is Intel-only atm) our script launching a crypto miner
         1. `The docker client is executed in a container` when we run `crictl` to manipulate the local container runtine circumventing K8s
         1. Note that in the last docker client we see the psql being run which would tell us that data likely was exfiltrated here
-    1. Then we'll search for `jane` to say we want to see any Falco events where the user was jane
-        1. `Disallowed K8s User` reflects that jane isn't in a built-in allow list of users so any API call she makes (via the kubectl CLI) is captured here. We'll show you how to tune Falco so that it doesn't show you that in the next section.
     1. (Optional) remove the search and/or go to the Dashboard tab to look around through the various other Events that Falco has caught during our session
-
-#### Falco Tuning
-
-Nearly all of the Falco rules will have an "escape hatch" list or macro where you can allow-list those things (namespaces, or user or container names etc.) that should be excluded from the rule firing. This is especially true for those Rules that say "disallowed" such as `Disallowed K8s User` and `Create Disallowed Namespace`
-
-Tuning out any noise so that most, if not all, of the Events that fire here are meaningful is important.
-
-Here is the default ruleset that was installed by the Helm chart in our cluster with regards to the Kubernetes Audit Trail - https://github.com/falcosecurity/charts/blob/master/falco/rules/k8s_audit_rules.yaml
-
-The `Disallowed K8s User` rule is as follows - it builds on lists and we are including the relevant one for our "escape hatch" allowed_k8s_users here as well:
-```
-- list: allowed_k8s_users
-  items: [
-    "minikube", "minikube-user", "kubelet", "kops", "admin", "kube", "kube-proxy", "kube-apiserver-healthcheck",
-    "kubernetes-admin",
-    vertical_pod_autoscaler_users,
-    cluster-autoscaler,
-    "system:addon-manager",
-    "cloud-controller-manager",
-    "system:kube-controller-manager"
-    ]
-
-- rule: Disallowed K8s User
-  desc: Detect any k8s operation by users outside of an allowed set of users.
-  condition: kevt and non_system_user and not ka.user.name in (allowed_k8s_users) and not ka.user.name in (eks_allowed_k8s_users)
-  output: K8s Operation performed by user not in allowed list of users (user=%ka.user.name target=%ka.target.name/%ka.target.resource verb=%ka.verb uri=%ka.uri resp=%ka.response.code)
-  priority: WARNING
-  source: k8s_audit
-  tags: [k8s]
-
-```
-
-So, the way to not have it fired `Disallowed K8s User` for john or jane is to add them to `allowed_k8s_users`. And, rather than edit the upstream default policy document, the way we do this is to override it in our own policy file that gets applied after/on top of that one. These are stored in Kubernnetes as Configmaps:
-1. `kubectl edit configmap falco-rules -n falco`
-1. Add the following under the macro under customrules.yaml as follows (note that you'll need to know how to use the vi editor - if you don't then feel free to skip this step):
-```
-apiVersion: v1
-data:
-  customrules.yaml: |-
-    - macro: user_known_ingress_remote_file_copy_activities
-      condition: container.name startswith "hello-client" or k8s.ns.name = "monitoring"
-    - list: allowed_k8s_users
-      items: [
-        "minikube", "minikube-user", "kubelet", "kops", "admin", "kube", "kube-proxy", "kube-apiserver-healthcheck",
-        "kubernetes-admin",
-        vertical_pod_autoscaler_users,
-        cluster-autoscaler,
-        "system:addon-manager",
-        "cloud-controller-manager",
-        "system:kube-controller-manager",
-        "john",
-        "jane"
-        ]
-```
-
-The way that it has been deployed by the Helm chart Falco will automatically be reloaded when this ConfigMap changes to apply our new rules.
-
-Falco's default rules are a good start but, as you can see, require some tuning for your environment. Some rules where it says 'disallowed' in the rule require you to add certain users/namespaces/etc to lists. You can also add exclusions to cater for certain services and add-ons that require additional privileges or that don't (yet?) honor best practices to remove noise.
-
-There is a great Falco 101 training on more details available here - https://learn.sysdig.com/falco-101
 
 ### Running containers as non-root
 
