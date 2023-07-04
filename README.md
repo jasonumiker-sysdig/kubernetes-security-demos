@@ -188,7 +188,6 @@ There are actually two Falcos running - one watching the Linux kernel syscalls o
 
 1. Open Falcosidekick UI by going to port http://(IP):30282 on your Node and using the username/password of admin/admin
     1. If you are signed into a microk8s-vm on your Mac or Windows machine, you can run `kubectl get nodes -o wide` to find the IP address to use (the INTERNAL-IP)
-    1. If run in AWS then this will be the public IP of the EC2 instance
 1. Note the Rules that have been firing. Many of these things might not be issues but it is good that Falco has recorded them so we can decide if they are or they aren't in our case.
 1. Go to the Events Tab to see the Events in more detail.
     1. First we'll search for `playground` in the search box under the Sources dropdown then scroll to the bottom and increase the Rows per page to 50. Note the following events:
