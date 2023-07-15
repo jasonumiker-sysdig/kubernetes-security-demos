@@ -1,11 +1,11 @@
 #!/bin/bash
-# NOTE: Run this with sudo
+# NOTE: Run this with sudo inside microk8s-vm
 
-# Install microk8s on it
+# Install microk8s
 snap install microk8s --channel=1.26/stable --classic
 
 # Enable CoreDNS, RBAC, hostpath-storage, ingress
-microk8s enable dns rbac hostpath-storage
+microk8s enable dns rbac hostpath-storage metrics-server
 microk8s status --wait-ready
 
 # Install kubectl in microk8s-vm
@@ -15,21 +15,20 @@ snap install kubectl --channel 1.26/stable --classic
 snap install helm --classic
 
 # Install crictl in microk8s-vm
-ARCH=$(dpkg --print-architecture)
-wget -q https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.26.1/crictl-v1.26.1-linux-$ARCH.tar.gz
-tar zxvf crictl-v1.26.1-linux-$ARCH.tar.gz -C /usr/local/bin
-rm -f crictl-v1.26.1-linux-$ARCH.tar.gz
-echo "runtime-endpoint: unix:///var/snap/microk8s/common/run/containerd.sock" > /etc/crictl.yaml
+#ARCH=$(dpkg --print-architecture)
+#wget -q https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.26.1/crictl-v1.26.1-linux-$ARCH.tar.gz
+#tar zxvf crictl-v1.26.1-linux-$ARCH.tar.gz -C /usr/local/bin
+#rm -f crictl-v1.26.1-linux-$ARCH.tar.gz
+#echo "runtime-endpoint: unix:///var/snap/microk8s/common/run/containerd.sock" > /etc/crictl.yaml
 
 # Set up the kubeconfig
-mkdir /root/.kube
+#mkdir /root/.kube
 microk8s.config | cat - > /root/.kube/config
 
 # Install Falco
 helm repo add falcosecurity https://falcosecurity.github.io/charts
 helm repo update
 helm install falco falcosecurity/falco --namespace falco --create-namespace -f falco-values.yaml --kubeconfig /root/.kube/config
-helm install falco-k8saudit falcosecurity/falco --namespace falco --create-namespace -f falco-k8saudit-values.yaml --kubeconfig /root/.kube/config
 
 # Set up multi-tenancy
 # Create token for Jane to access team1
@@ -62,7 +61,7 @@ chown ubuntu:ubuntu -R /home/ubuntu/.kube
 
 # Enable auditing
 mkdir /var/snap/microk8s/common/var/lib/k8s_audit
-AGENT_SERVICE_CLUSTERIP=$(kubectl get service falco-k8saudit-k8saudit-webhook -o=jsonpath={.spec.clusterIP} -n falco) envsubst < webhook-config.yaml.in > webhook-config.yaml
+AGENT_SERVICE_CLUSTERIP=$(kubectl get service falco-k8saudit-webhook -o=jsonpath={.spec.clusterIP} -n falco) envsubst < webhook-config.yaml.in > webhook-config.yaml
 cp ./webhook-config.yaml /var/snap/microk8s/common/var/lib/k8s_audit
 cp ./audit-policy.yaml /var/snap/microk8s/common/var/lib/k8s_audit
 cat /var/snap/microk8s/current/args/kube-apiserver > kube-apiserver
