@@ -1,13 +1,39 @@
-apiVersion: v1
-kind: Namespace
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: security-playground
+  name: postgres-sakila-deployment
+  labels:
+    app: postgres-sakila
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-sakila
+  template:
+    metadata:
+      labels:
+        app: postgres-sakila
+    spec:
+      containers:
+      - name: postgres-sakila
+        image: public.ecr.aws/m9h2b5e7/postgres-sakila:110623
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_PASSWORD
+          value: "sakila"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: security-playground
-  namespace: security-playground
   labels:
     app.kubernetes.io/name: security-playground
 spec:
@@ -23,7 +49,7 @@ spec:
       hostPID: true
       containers:
         - name: security-playground
-          image: jasonumiker/security-playground:190523
+          image: public.ecr.aws/m9h2b5e7/security-playground:110623
           ports:
             - name: http
               containerPort: 8080
@@ -38,12 +64,18 @@ spec:
               port: http
           securityContext:
             privileged: true
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: security-playground
-  namespace: security-playground
   labels:
     app.kubernetes.io/name: security-playground
 spec:
@@ -53,6 +85,6 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
-      nodePort: 30284
+      nodePort: 30000
   selector:
     app.kubernetes.io/name: security-playground

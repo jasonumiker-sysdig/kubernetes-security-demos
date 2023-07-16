@@ -2,7 +2,7 @@
 # Script to demonstrate how to interact with security-playground
 
 NODE_IP=$(kubectl get nodes -o wide | awk 'FNR == 2 {print $6}')
-NODE_PORT=30000
+NODE_PORT=30001
 
 echo "1. Read a sensitive file (/etc/shadow)"
 curl $NODE_IP:$NODE_PORT/etc/shadow
