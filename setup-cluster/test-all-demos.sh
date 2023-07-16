@@ -5,17 +5,19 @@
 # Wait for falco agent to be up before proceeding
 kubectl rollout status daemonset falco -n falco --timeout 300s
 
-# Kubernetes Namespace and RBAC Demo
-kubectl get pods -A
+echo "Demo of Kubernetes Role-based Access Control (RBAC) and Namespaces"
 echo "--------------------"
-cd ~/kubernetes-security-demos
-cat team1.yaml
+kubectl config use-context microk8s
+kubectl get pods -A
 echo "--------------------"
 kubectl api-resources
 echo "--------------------"
 kubectl get clusterrole admin -o yaml
 echo "--------------------"
 kubectl get clusterrole admin -o yaml | wc -l
+echo "--------------------"
+cd ~/kubernetes-security-demos
+cat team1.yaml
 echo "--------------------"
 kubectl apply -f team1.yaml && kubectl apply -f team2.yaml
 echo "--------------------"
@@ -28,17 +30,18 @@ echo "--------------------"
 kubectl get pods
 echo "--------------------"
 cd ~/kubernetes-security-demos/demos/network-policy/hello-app
+echo "--------------------"
 kubectl apply -f .
 echo "--------------------"
 kubectl get pods
 echo "--------------------"
 kubectl describe deployments hello-client-allowed
 echo "--------------------"
-kubectl exec deploy/hello-client-allowed -n team1 -- echo "I execed into the Pod"
+kubectl exec -it deploy/hello-client-allowed -n team1 -- /bin/sh -c whoami
 echo "--------------------"
 kubectl apply -f ../../../team1-noexec.yaml
 echo "--------------------"
-kubectl exec deploy/hello-client-allowed -n team1 -- echo "I execed into the Pod"
+kubectl exec -it deploy/hello-client-allowed -n team1 -- /bin/sh
 echo "--------------------"
 kubectl config use-context microk8s-john
 echo "--------------------"
@@ -46,108 +49,76 @@ kubectl get pods
 echo "--------------------"
 kubectl get pods --namespace=team1
 echo "--------------------"
+
+echo ""
+echo "Demo of common runtime container exploits/escapes"
+echo "--------------------"
 kubectl config get-contexts
 echo "--------------------"
-kubectl describe secret hello-secret -n team1
+cd ~/kubernetes-security-demos/demos/security-playground/
+kubectl apply -f security-playground.yaml
+kubectl rollout status deployment security-playground --timeout 300s
+kubectl rollout status deployment postgres-sakila --timeout 300s
 echo "--------------------"
-
-# Host Isolation Demo - Exploiting vulnerabilities at runtime 
-cd ~/kubernetes-security-demos/demos/security-playground
-cat app.py
-echo "--------------------"
-cat example-curls.sh
+kubectl get all
 echo "--------------------"
 kubectl config use-context microk8s
 echo "--------------------"
-kubectl apply -f ../data-exfil-postgres/postgres-sakila.yaml
-kubectl wait deployment -n postgres-sakila postgres-sakila-deployment --for condition=Available=True --timeout=300s
-echo "--------------------"
-kubectl apply -f security-playground.yaml
-kubectl wait deployment -n security-playground security-playground --for condition=Available=True --timeout=300s
-echo "--------------------"
-kubectl get pods -n security-playground
-echo "--------------------"
 ./example-curls.sh
 echo "--------------------"
-
-# OPA Gatekeeper
-cd ~/kubernetes-security-demos/demos/opa-gatekeeper
-cat ./install-gatekeeper.sh
-echo "--------------------"
-./install-gatekeeper.sh
-echo "--------------------"
-cd ~/kubernetes-security-demos/demos
-./nsenter-node.sh
-echo "--------------------"
-cd ~/kubernetes-security-demos/demos/opa-gatekeeper
-./uninstall-gatekeeper.sh
-echo "--------------------"
-
-# PSAs
-kubectl label --overwrite ns security-playground pod-security.kubernetes.io/enforce=baseline pod-security.kubernetes.io/warn=baseline
-echo "--------------------"
-kubectl label --overwrite ns default pod-security.kubernetes.io/enforce=baseline pod-security.kubernetes.io/warn=baseline
-echo "--------------------"
-kubectl rollout restart deployment security-playground -n security-playground
-echo "--------------------"
-kubectl get events -n security-playground
-echo "--------------------"
-~/kubernetes-security-demos/demos/nsenter-node.sh
-echo "--------------------"
-
-#Kubebench
-cd ~/kubernetes-security-demos/demos
-echo "--------------------"
-kubectl label namespaces default pod-security.kubernetes.io/enforce-
-echo "--------------------"
-kubectl apply -f kubebench-job.yaml
-echo "--------------------"
-kubectl wait job/kube-bench --for condition=complete
-kubectl logs job/kube-bench
-
-# NetworkPolicy Demo
 cd ~/kubernetes-security-demos/demos/security-playground
+cat security-playground-restricted.yaml
+echo "--------------------"
+kubectl apply -f security-playground-restricted.yaml
+kubectl rollout status deployment security-playground-restricted --timeout 300s -n security-playground-restricted
+echo "--------------------"
+./example-curls-restricted.sh
+echo "--------------------"
+kubectl describe namespace security-playground-restricted
+echo "--------------------"
+kubectl apply -f security-playground.yaml -n security-playground-restricted
+echo "--------------------"
+cd ~/kubernetes-security-demos/demos
+kubectl apply -f kubebench-job.yaml
+kubectl wait job/kube-bench --for condition=complete
+echo "--------------------"
+kubectl logs job/kube-bench
+echo "--------------------"
+
+echo ""
+echo "Demo of common runtime container exploits/escapes"
+echo "--------------------"
 kubectl logs deployment/hello-client-allowed -n team1
 echo "--------------------"
 kubectl logs deployment/hello-client-blocked -n team1
 echo "--------------------"
-cd ~/kubernetes-security-demos/demos/network-policy/hello-app
-kubectl apply -f hello-client.yaml -n team2
-kubectl wait deployment -n team2 hello-client-allowed --for condition=Available=True --timeout=300s
-kubectl wait deployment -n team2 hello-client-blocked --for condition=Available=True --timeout=300s
-echo "--------------------"
-kubectl logs deployment/hello-client-allowed -n team2
-echo "--------------------"
-kubectl logs deployment/hello-client-blocked -n team2
-echo "--------------------"
 cd ~/kubernetes-security-demos/demos/network-policy
+cat example-curl-networkpolicy.sh
+echo "--------------------"
+./example-curl-networkpolicy.sh
+echo "--------------------"
 cat network-policy-namespace.yaml
 echo "--------------------"
-kubectl apply -f network-policy-namespace.yaml -n team1
+kubectl apply -f network-policy-namespace.yaml
 echo "--------------------"
 kubectl logs deployment/hello-client-allowed -n team1
 echo "--------------------"
 kubectl logs deployment/hello-client-blocked -n team1
 echo "--------------------"
-cd ~/kubernetes-security-demos/demos/network-policy/hello-app
-kubectl logs deployment/hello-client-allowed -n team2
+./example-curl-networkpolicy.sh
 echo "--------------------"
-kubectl logs deployment/hello-client-blocked -n team2
-echo "--------------------"
-cd ~/kubernetes-security-demos/demos/network-policy
 cat network-policy-label.yaml
 echo "--------------------"
-kubectl apply -f network-policy-label.yaml -n team1
+kubectl apply -f network-policy-label.yaml
 echo "--------------------"
 kubectl logs deployment/hello-client-blocked -n team1
 echo "--------------------"
-kubectl logs deployment/hello-client-blocked -n team2
+./example-curl-networkpolicy.sh
 echo "--------------------"
-kubectl logs deployment/hello-client-allowed -n team2
+cat network-policy-deny-egress.yaml
 echo "--------------------"
-cat network-policy-label-all-namespaces.yaml
+kubectl apply -f network-policy-deny-egress.yaml -n team2
 echo "--------------------"
-kubectl apply -f network-policy-label-all-namespaces.yaml -n team1
+../security-playground/example-curls.sh
 echo "--------------------"
-kubectl logs deployment/hello-client-allowed -n team2
-echo "--------------------"
+echo "The End."

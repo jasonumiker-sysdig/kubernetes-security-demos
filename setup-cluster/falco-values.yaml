@@ -76,6 +76,15 @@ falcosidekick:
       type: NodePort
     replicaCount: 1
   replicaCount: 1
+
+healthChecks:
+  livenessProbe:
+    timeoutSeconds: 10
+    periodSeconds: 30
+  readinessProbe:
+    timeoutSeconds: 10
+    periodSeconds: 30
+
 customRules:
   customrules.yaml: |-
     - macro: user_known_ingress_remote_file_copy_activities

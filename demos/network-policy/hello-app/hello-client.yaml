@@ -73,7 +73,7 @@ spec:
 
       # Define container properties
       containers:
-      - image: alpine:3.7
+      - image: alpine:3.18.2
         name: hello-client-allowed
 
         # A simple while loop that attempts to access the hello-server service every
@@ -134,7 +134,7 @@ spec:
 
       # Define container properties
       containers:
-      - image: alpine:3.17
+      - image: alpine:3.18.2
         name: hello-client-blocked
 
         # A simple while loop that attempts to access the hello-server service every

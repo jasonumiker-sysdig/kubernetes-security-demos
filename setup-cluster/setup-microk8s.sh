@@ -15,11 +15,12 @@ snap install kubectl --channel 1.26/stable --classic
 snap install helm --classic
 
 # Install crictl in microk8s-vm
+# Now installing this through example-curls.sh instead
 #ARCH=$(dpkg --print-architecture)
 #wget -q https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.26.1/crictl-v1.26.1-linux-$ARCH.tar.gz
 #tar zxvf crictl-v1.26.1-linux-$ARCH.tar.gz -C /usr/local/bin
 #rm -f crictl-v1.26.1-linux-$ARCH.tar.gz
-#echo "runtime-endpoint: unix:///var/snap/microk8s/common/run/containerd.sock" > /etc/crictl.yaml
+echo "runtime-endpoint: unix:///var/snap/microk8s/common/run/containerd.sock" > /etc/crictl.yaml
 
 # Set up the kubeconfig
 #mkdir /root/.kube
@@ -28,7 +29,7 @@ microk8s.config | cat - > /root/.kube/config
 # Install Falco
 helm repo add falcosecurity https://falcosecurity.github.io/charts
 helm repo update
-helm install falco falcosecurity/falco --namespace falco --create-namespace -f falco-values.yaml --kubeconfig /root/.kube/config
+helm install falco falcosecurity/falco --namespace falco --create-namespace -f falco-values.yaml --version 3.3.0 --kubeconfig /root/.kube/config
 
 # Set up multi-tenancy
 # Create token for Jane to access team1

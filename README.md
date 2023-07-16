@@ -1,13 +1,18 @@
 # Kubernetes security demos
 
-I've recorded the delivery of these demos and the associated presentation and uploaded it to YouTube - https://youtu.be/gUhQmYVh_Xs
+This project is intended to provide two things:
+1. Automation to quickly and easily spin up a Kubernetes lab to learn about its security on nearly any machine (Windows, Mac (both Intel and M1/M2), or Linux). It can run in as little as 2 CPUs and 4GB of RAM so it should run on even modest laptops. 
+    1. And, if you make a mistake, you can just delete this VM and re-run this automation to be back to a working environment in minutes (so can learn and tinker without any fear)!
+1. Various demonstration scenarios documented in this README to help you learn about many of the common Kubernetes security features and challenges, and how to address them, first-hand in that lab environment.
 
-And these are demos of the topics discussed my recent blog post - https://sysdig.com/blog/multi-tenant-isolation-boundaries-kubernetes/
+I'm a hands-on learner and built this for myself awhile back - and now I want to share it with the community.
 
 ## Pre-requisites
-By default the VM running the microk8s Kubernetes as well as the associated tooling and demo applications uses 2 vCPUs and 4GB of RAM.
+This lab provisions an Ubuntu virtual machine (VM) with [multipass](https://multipass.run/) and then installs [microk8s](https://microk8s.io/) within it.
 
 Mac (via a VM managed by multipass):
+1. (If you don't already have it) Install [Homebrew](https://brew.sh/)
+    1. You can do this by running the command `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
 1. Install microk8s with a `brew install microk8s`
 1. Clone this repo - `git clone https://github.com/jasonumiker-sysdig/kubernetes-security-demos.git`
 1. Run `setup-cluster/setup-microk8s-vm.sh`
@@ -30,232 +35,218 @@ Linux (via a VM managed by multipass):
 
 OR
 
-* Run `cd ~/.kube` and `multipass transfer microk8s-vm:/home/ubuntu/.kube/config config` to copy the Kubeconfig to your host. If you have installed `kubectl` and also `git cloned` this git repo to the host in your home directory then you can run the commands from there rather than a shell within the VM.
+* Run `cd ~/.kube` and `multipass transfer microk8s-vm:/home/ubuntu/.kube/config config` to copy the Kubeconfig to your host. If you have installed `kubectl`, and also have `git cloned` this git repo to the host in your home directory, then you can run the commands from there rather than a shell within the VM if you'd prefer.
 
 Here are some other useful commands to manage that VM once it exists:
 * `multipass stop microk8s-vm` - shut the VM down
 * `multipass start microk8s-vm` - start it up
 * `multipass delete microk8s-vm && multipass purge` - delete and then purge the VM
 
-## Kubernetes Namespace and RBAC Demo
-1. `kubectl get pods -A` - We are currently signed in as the admin ClusterRole - we can do anything cluster-wide
+## Demo of Kubernetes Role-based Access Control (RBAC) and Namespaces
+Regardless of how you have people authenticate/login to Kubernetes (AWS IAM Users/Roles for EKS, Google Account to GKE, OIDC to your identity provider, etc.) Kubernetes does its own authorization. It does this via its [Role Based Access Control (RBAC)](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) APIs.
+
+At a high level, the way Kubernetes RBAC works is that you either assign your Users a [ClusterRole](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole), which gives them cluster-wide privileges, or you assign them a [Role](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole) which restricts them to only have access to a particular Namespace within the cluster. A [Namespace](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/) is a logical boundary and grouping within Kubernetes to isolate the resources of particular teams from one another - so if you put different teams in different Namespaces via Roles the idea is that they can safely share the cluster as they shouldn't be able to interfere with one another. This is known as multi-tenancy. As you'll see, there is a little more to it than that, though...
+
+For both a Role as well as a ClusterRole you also assign what rules/permissions to it for what it can do. These are additive - in that there are no denys only allows.
+
+Let's explore how this all works:
+1. `kubectl get pods -A` - We are currently signed in as the cluster-admin ClusterRole - we can do anything cluster-wide
+1. `kubectl api-resources` this shows all the different resources that we can control the use of in our RBAC. 
+    1. It also shows which of them are Namespaced (can be managed by Roles) vs. which can't (and are therefore cluster-wide and need a ClusterRole to manage them)
+    1. And it also shows the short names for each resource type (which you can use to save typing in kubectl)
+1. `kubectl get clusterrole admin -o yaml | less` (press space to page down and q to exit) - This built-in admin role can explicitly do everything - and so you can clone it and remove those things you don't want a user to be able to do. As you can see, the minute you don't do *'s there is quite a lot of YAML here to go through!
+1. `kubectl get clusterrole admin -o yaml | wc -l` - 324 lines of it!
+1. You can see the details about this and the other built-in Roles such as edit and view [here](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles)
 1. `cd ~/kubernetes-security-demos`
-1. `cat team1.yaml` - Here we're creating a new namespace, team1, and then creating the most basic and powerful Role possible that can do anything within that Namespace with *'s for apiGroups, Resources and Verbs. Like we said this is not a great idea especially on the verbs. Then finally we're binding that new Role to a user named Jane.
-1. `kubectl api-resources` this shows all the different resources that we can control the use of in our RBAC
-1. `kubectl get clusterrole admin -o yaml | less` - And we can ask for details on the few built-in ClusterRoles we can use as a guide. This admin role is intended to be for privileged users but not ones who can do anything. As you can see, the minute you don't do *s there is quite a lot of YAML here.
-1. `kubectl get clusterrole admin -o yaml | wc -l` - 315 lines of it!
-1. But, we're much better than nothing doing a Role binding this user into a Namespace than a ClusterRole!
-1. We have that team1 you saw as well as another similar Namespace and Role called Team2 - let's apply them
+1. `cat team1.yaml` - Here we're creating a new namespace, team1, and then creating the most basic and powerful Role possible that can do anything within that Namespace with *'s for apiGroups, Resources and Verbs. Then we're binding that new Role to a user named Jane.
+    1. This is perhaps overly permissive as it:
+        1. Includes the verbs like [Escalate](https://kubernetes.io/docs/concepts/security/rbac-good-practices/#escalate-verb) and [Impersonate](https://kubernetes.io/docs/concepts/security/rbac-good-practices/#escalate-verb) that most users won't need.
+        1. Allows the Role to create other Roles and bind Users to it within that Namespace
+        1. Allows the Role to create/edit all the NetworkPolicy firewalls for that Namespace and its workloads
+        1. Etc.
+    1. But, just by using a Role and Namespace rather than a ClusterRole (which would be cluster-wide), we're still doing pretty well here.
+1. We have that team1 you saw as well as another similar Namespace and Role called Team2 that is bound to another user (John) - let's apply them!
 1. `kubectl apply -f team1.yaml && kubectl apply -f team2.yaml`
-1. `kubectl config get-contexts` - Our two other users are already set up here in our kubectl - jane who has access to namespace team1 and john who has access to namespace team2
+1. `kubectl config get-contexts` - Our two other users are already set up here in our kubectl - `jane` who we just gave access to namespace `team1` and `john` who we just gave access to namespace `team2`
 1. `kubectl config use-context microk8s-jane` - we've just logged in as Jane instead
 1. `kubectl get pods -A` if we try to ask to see all the Pods in all the namespaces again we now get an error that we can't use the cluster scope
-1. `kubectl get pods` removing the -A for all namespaces and it says we don't have any Pods in our team1 namespace which we do have access to
+1. `kubectl get pods` removing the -A for all namespaces and it says we don't have any Pods in our team1 namespace - which we do have access to see
 1. `cd ~/kubernetes-security-demos/demos/network-policy/hello-app`
-1. `kubectl apply -f .` - Let's deploy an app to our namespace
+1. `kubectl apply -f .` - Let's deploy an app to our namespace - which we do have access to do
 1. `kubectl get pods` - As you can see we do have enough cluster access to deploy workloads within our team1 namespace
 1. `kubectl describe deployments hello-client-allowed` - Note under Pod Template -> Environment that a Kubernetes secret (hello-secret) is getting mounted as the environment variable API_KEY at runtime
-1. `kubectl exec -it deploy/hello-client-allowed -n team1 -- /bin/sh` then `whoami` then `exit` - We can connect interactively into our Pods with the * admin privileges of our Role
-1. `kubectl apply -f ../../../team1-noexec.yaml` - If we set our Role to the those 315 explicit lines above but with the pod/execs commented out then that will block us from being able to do this.
+1. `kubectl exec -it deploy/hello-client-allowed -n team1 -- /bin/sh` and then `whoami` (or whatever else you want to run) and then `exit` - Jane even has permission to connect interactively into all the Pods in their team1 namespace and run whatever commands she wants at runtime.
+1. `kubectl apply -f ../../../team1-noexec.yaml` - If we set our Role to the those 324 explicit lines above but with the `pod/exec` commented out then that will block us from being able to do this.
+    1. Note that we are still signed in as Jane - since we had put *'s we actually have the rights to change our own Role permissions in this way!
 1. `kubectl exec -it deploy/hello-client-allowed -n team1 -- /bin/sh` - trying it again you'll see that it is blocked
-1. Now lets flip to John who is restricted to the team2 namespace
-1. `kubectl config use-context microk8s-john`
+1. `kubectl config use-context microk8s-john` - Now lets flip to John who is restricted to the team2 namespace
 1. `kubectl get pods` - we don't have any workloads deployed here yet
-1. `kubectl get pods --namespace=team1` - and we are not allowed to interact with the one Jane deployed to team1
+1. `kubectl get pods --namespace=team1` - and, as expected we are not allowed to interact with the one Jane deployed to team1
 
 So, that was a very quick overview of how to configure multi-tenancy of Kubernetes at the control plane level via Namespaces and Roles. And, how much YAML it takes to move away from *'s for the resources and verbs in your Role definitions.
 
-## Host Isolation Demo
+## Demo of common runtime container exploits/escapes - and how to detect and prevent them
 
-### Exploiting vulnerabilities (known CVEs, unknown zero-days or vulnerabilities within your own code etc.) at runtime to control the vulnerable container
+We are going to perform a variety of common container/Kubernetes exploits and then show how to block/defend against them as well as detect them if they happen in real-time with Falco.
 
-There are also a number of things that we can do without needing to escape the container. The worst vulnerabilities allow you to do remote code execution (RCE) of the services via malformed network calls to them or insufficient security of the APIs they are exposing.
+### Our General-Purpose Zero-Day Remote Code Execution (RCE) Vulnerability - security-playground
 
-To illustrate the worst-case-scenario of that we have the simplest and least secure Python app possible that we are calling security-playground:
+[Sysdig](https://sysdig.com/) (the company that donated Falco to the CNCF - and that I work for) provides a general-purpose example exploit called Security Playground https://github.com/sysdiglabs/security-playground that is a Python app which just reads, writes and/or executes whatever paths you GET/POST against it. To understand a bit more about how that works, have a look at [app.py](demos/security-playground/docker-build-security-playground/app.py).
+
+The idea with this is is to imagine there is another critical remote code execution (RCE) vulnerability (CVE) that there is not yet a known - so your vulnerability scans don't pick it up. What can you do to detect that this is being exploited - and prevent/mitigate any damage it'd cause.
+
+You can see various examples of how this works in the [example-curls.sh](demos/security-playground/example-curls.sh) file.
+
+**NOTE:** This is deployed with a service of type NodePort - if you'd prefer it to be a load balancer then modify that manifest to reconfigure the Service as well as the bash script addresses how you'd prefer. Just be careful as this is a very insecure app (by design) - don't put it on the Internet!
+
+### Deploying and exploiting security-playground
+
+Run the following commands:
+1. `kubectl config get-contexts` - confirm we are still signed in as John (to Namespace team2)
+1. `cd ~/kubernetes-security-demos/demos/security-playground/`
+1. `kubectl apply -f security-playground.yaml` - deploy security-playground
+1. `kubectl get all` - We deployed a Deployment (that created a ReplicaSet that created a Pod) as well as a NodePort service exposing security-playground on port 30000 on our Node.
+1. `curl ./example-curls.sh` to see all of the various commands we're going to run to exploit security-playground's remote code execution vulnerability
+1. `./example-curls.sh` to run all of our example exploits
+
+Watch the output scroll by to see this from the attacker's perspective.
+
+### How and why did that all work?
+
+In addition to our RCE vulnerability in the code, the [security-playground.yaml](demos/security-playground/security-playground.yaml) example has three key security issues:
+1. It runs as root
+1. It is running with `hostPID: true`
+1. It is running in a privileged securityContext
+
+When these (mis)configurations are done together, they allow you to escape out of the container isolation boundaries and be root on the host. This allows you not just full control over the host but also over/within the other containers.
+
+We used two tools to break out and escalate our privileges:
+* [nsenter](https://manpages.ubuntu.com/manpages/jammy/man1/nsenter.1.html) which allows you to switch Linux namespaces (if you are allowed)
+    1. Not to be confused with Kubernetes Namespaces, [Linux Namespaces](https://en.wikipedia.org/wiki/Linux_namespaces) are a feature of the Linux kernel used by containers to isolate them from each other.
+* [crictl](https://github.com/kubernetes-sigs/cri-tools/blob/master/docs/crictl.md) which is used to control the local container runtime containerd bypassing Kubernetes (if you can connect to the container socket)
+
+### Trying it again against security-playground-restricted
+
+The [security-playground-restricted.yaml](demos/security-playground/security-playground-restricted.yaml) example fixes all these vulnerabilities in the following ways:
+1. We build a container image that runs as a non-root user (this required changes to the Dockerfile as you'll see in [Dockerfile-unprivileged](demos/security-playground/docker-build-security-playground/Dockerfile-unprivileged) vs. [Dockerfile](demos/security-playground/docker-build-security-playground/Dockerfile)).
+1. The PodSpec not only doesn't have hostPID and a privileged securityContext but it adds in the new Pod Security Admission (PSA) restricted mode for the namespace which ensures that they can't be added to the PodSpec to restore them.
+1. The restricted PSA also keeps us from trying to specify/restore root permissions (the original container could only run as Root but this one we could specify in the PodSpec to run it as root and it would still work).
+
+Run the following:
 1. `cd ~/kubernetes-security-demos/demos/security-playground`
-1. `cat app.py` - we can see just see just how simple this Python app is - it'll read any file you ask it to with a RESTful GET, write any file you ask it to with a RESTful POST and even execute any file you want it to with a POST to the /exec URI path.
-1. `cat example-curls.sh` Since this is just REST we can do these exploits with just `curl` commands.
-1. `kubectl config use-context microk8s` - Let's go back to our admin Kubernetes ClusterRole
-1. `kubectl apply -f ../data-exfil-postgres/postgres-sakila.yaml` to deploy a sample database for us to try to exfiltrate data from using this example vulnerability
-1. `kubectl apply -f security-playground.yaml` to deploy security-playground
-1. `kubectl get pods -n security-playground` - keep running this until our Pod has come up
-1. `./example-curls.sh` - to run these example curls which will:
-    1. Read a sensitive file (/etc/shadow)
-    1. Write a file to a sensitive location (/bin)
-    1. Read that new file back from that sensitive location
-    1. Install dig from apt and then do some DNS queries against the Kubernetes service discovery (we can see all the services running on the cluster by querying any.any.svc.cluster.local)
-    1. Download as script that, in turn, tries to run some cyrpto mining within our Pod (note that this currently doesn't work on arm like M1/M2 Mac - working on getting the crypto mining example working there too)
-    1. Run nsenter (a tool to let us change Linux namespaces) to escape our container and call crictl (the Docker CLI equivilent for the containerd container runtime on the host) to show we can interact with the containers on the host that aren't even in our K8s Namespace
-    1. Leverage that same escape to connect to a database running in a Pod within another K8s Namespace and exfiltrate data from it with the DB's CLI
+1. `cat security-playground-restricted.yaml`
+1. `kubectl apply -f security-playground-restricted.yaml`
+1. `./example-curls-restricted.sh`
 
-This example is interesting because:
-1. It could represent a worst-case zero-day - the next Log4j or Struts etc. - that we don't yet know about and that our container image vulnerability scans won't pick up yet without a public CVE in the databases
-1. It could be our own code which will never have a public CVE against it
+Comparing the results - this blocked almost everything that worked before:
+||security-playground|security-playground-restricted|
+|-|-|-|
+|1|allowed|blocked (by not running as root)|
+|2|allowed|blocked (by not running as root)|
+|3|allowed|blocked (by not running as root)|
+|4|allowed|blocked (by not running as root and no hostPID and no privileged securityContext)|
+|5|allowed|blocked (by not running as root and no hostPID and no privileged securityContext)|
+|6|allowed|blocked (by not running as root and no hostPID and no privileged securityContext)|
+|7|allowed|blocked (by not running as root and no hostPID and no privileged securityContext)|
+|8|allowed|allowed|
 
-We'll see in a future section that Falco recorded this nefarious runtime behavior for us.
+So, even with still having this critical remote code execution vulnerability in our service, we still managed to block nearly everything through better configuration/posture for this workload!
 
-### Escaping container to open an interactive nsenter shell on the host
-We can also use kubectl exec interactively (the -it) option to leverage that same container escape approach as a sort of "ssh to the host as root". This is showing how an external or even inside threat actor can take some access to the cluster with kubectl conmbined with insecure options in the PodSpec to break out of their container and get privilege escalation.
+And, on that last item, we are going to show how to block that via NetworkPolicies to limit the Internet egress to download the miner and/or allow it to connect to the miner pool as required in a later section.
 
-1. `kubectl config use-context microk8s-john` - Sign back in as John who should be limited to the team2 namespace (as we gave him a Role there rather than a ClusterRole)
-1. `kubectl describe secret hello-secret -n team1` - as expected we can't get at team1's secrets as john (as he only has access to team2's namespace)
-1. `cd ~/kubernetes-security-demos/demos`
-1. `cat nsenter-node.sh` - as we said you can ask for some things in your Podspecs such as hostPID and a privileged security context that allow you to break out of the Linux namespace boundaries of containers. This asks for those things and then runs a tool called ns-enter to leave our Linux namespace for the host one. This should result in us having an interactive shell to the Kubernetes Node and as root.  
-    1. NOTE: If we had not allowed `kubectl exec` for John in team2 then this also would have been blocked by that. Since we don't allow that for Jane anymore she couldn't do this. So RBAC plays a role here too...
-1. `./nsenter-node.sh` - and there we go - we're now root@microk8s-vm which is our Kubernetes Node
-1. `ps aux` - when you are root in the host's Linux namespace you can see all the processes in all the containers
-1. `crictl ps` - and, worse than that, I can connect to the container runtime that Kubernetes manages directly (bypassing Kubernetes entirely) with the crictl command
-1. `crictl ps | grep hello-client-allowed` - There is the API_KEY secret as part of Jane's workload in team1. Lets interactively connect into it and see if we can get it!
-1. `export HELLO_CLIENT_CONTAINER_ID=$(crictl ps | grep hello-client-allowed | awk 'NR==1{print $1}')` to put the container ID of hello-client-allowed in an environment variable for us
-1. `crictl exec -it $HELLO_CLIENT_CONTAINER_ID /bin/sh` And now I am in that container interactively
-1. `set | grep API_KEY` and, since secrets are decrypted into the running containers as environment variables or files, I can see those this way - even from things from other Kubernetes Namespaces
-1. `exit` to leave the container
-1. `crictl stop $HELLO_CLIENT_CONTAINER_ID && crictl rm $HELLO_CLIENT_CONTAINER_ID` and I can bypass Kubernetes' API and as the container runtime to stop/delete containers/Pods Kubernetes has launched on this Node as well
-1. `exit` to leave the container
+### Pod Security Admission - preventative enforcement
 
-So even though we properly set up our Kubernetes RBAC and Namespaces this host-level container isolation let us down as people who can launch a pod in one namespace with those defaults can 'own' the Node and everything running on it - even if those things are from a different Namespace.
+There is now a feature built-in to Kubernetes (which GA'ed in 1.25) to enforce standards around these insure options in a PodSpec which undermine your workload/cluster security - [Pod Security Admission](https://kubernetes.io/docs/concepts/security/pod-security-admission/).
+        
+This works by [adding labels onto each Namespace](https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-namespace-labels/). There are two standards that it can warn about and/or enforce for you - baseline and restricted.
+1. [baseline](https://kubernetes.io/docs/concepts/security/pod-security-standards/#baseline) - this prevents the worst of the parameters in the PodSpec such as hostPid and Privileged but still allows the container to run as root
+1. [restricted](https://kubernetes.io/docs/concepts/security/pod-security-standards/#baseline) - this goes further and blocks all insecure options including running as non-root
 
+We enabled that for the Namespace security-playground-restricted - let's see how that works:
 
-### Open Policy Agent (OPA) Gatekeeper and Pod Security Admission (PSA)
-The answer to this problem is by adding an admission controller to prevent users asking for those insecure parameters in their Podspecs. There traditionally hasn't been one there by default in most K8s offerings - even things like AWS EKS, Google GKE or MS AKS. Though this may improve now that Pod Security Admission (PSAs) have gone GA in Kubernetes 1.25.
+Run:
+1. `kubectl describe namespace security-playground-restricted` and note that we are both warning and enforcing the restricted standard here.
+1. `kubectl apply -f security-playground.yaml -n security-playground-restricted` and see how our original insecure security-playground isn't allowed here by the PSA.
 
-What people have usually done up until now is leverage another CNCF project, Open Policy Agent (OPA) and their Gatekeeper to achieve this. the new PSA approach is less flexible but much easier - and built into Kubernetes now. We'll look at both.
-
-One way or the other, though, if you are doing multi-tenancy you need to ensure you have one of them.
-
-#### Open Policy Agent (OPA) Gatekeeper
-1. `cd ~/kubernetes-security-demos/demos/opa-gatekeeper`
-1. `kubectl config use-context microk8s` to sign back in as our admin ClusterRole (we'll need this to install Gatekeeper)
-1. `cat ./install-gatekeeper.sh` - this script will install the OPA Gatekeeper Helm chart and then a few policies for it to enforce (which are in the form of Kubernetes custom resource definition (CRD) files/objects) that will do just that
-1. `./install-gatekeeper.sh` - let's run it
-1. `cd ~/kubernetes-security-demos/demos` - Okay now lets try our nsenter again
-1. `./nsenter-node.sh` - As you can see we now have OPA Gatekeeper policies blocking all the insecure options nsenter was asking for that allowed us to peform our escape - so that Pod is no longer allowed to launch. I am protected by this new admission controller!
-1. `cd ~/kubernetes-security-demos/demos/opa-gatekeeper/policies/constraint-templates/` then `cat` the various files in here to look at the policies (called constraint-templates) that made that possible
-1. `cd ~/kubernetes-security-demos/demos/opa-gatekeeper/policies/constraints` then `cat` the various files in here - while the previous constraint-templates are the polices constraints say when - and when not to - apply those policies. So constraint-templates are not enforced until a constraint says where and/or where not to apply it.
-1. `cd ~/kubernetes-security-demos/demos/opa-gatekeeper`
-1. `./uninstall-gatekeeper.sh` - removing Gatekeeper for a future demo to work though
-
-These actually came from the Gatekeeper library on Github where there are a number of additional examples here - https://github.com/open-policy-agent/gatekeeper-library/tree/master/library
-
-Also there is a good tool to test out your Rego (OPA's declarative language for policies) here - https://play.openpolicyagent.org/
-
-### (Newly GA in Kubernetes 1.25) Pod Security Admission
-Kubernetes now has a default way to handle this - [Pod Security Admission](https://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-namespace-labels/). The way that this works is that you put labels on your namespace(s) to tell it which of three [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/) (privileged, baseline or restrictive) that you want to either warn about or enforce on that Namespace.
-
-The way that we'd block nsenter or security-playground from allowing escaping of the container namespace would be to run the following command to add the label to the relevant namespace:
-```
-kubectl label --overwrite ns security-playground \
-  pod-security.kubernetes.io/enforce=baseline \
-  pod-security.kubernetes.io/warn=baseline
-kubectl label --overwrite ns default \
-  pod-security.kubernetes.io/enforce=baseline \
-  pod-security.kubernetes.io/warn=baseline
-```
-
-After running that command note the following output:
-```
-Warning: existing pods in namespace "security-playground" violate the new PodSecurity enforce level "baseline:v1.25"
-Warning: security-playground-55f8dd8c4b-x8266: host namespaces, privileged
-namespace/security-playground labeled
-```
-
-Note that if we had just specified the enforce without also specifying the warn we won't get warnings like this on the commandline.
-
-Since the pod is already running it wasn't stopped - but any replacement Pods won't be able to launch. To see that run `kubectl rollout restart deployment security-playground -n security-playground`. Note it warned us yet again that this is going to be blocked (since we are enforcing it). If you run `kubectl get events -n security-playground` you'll see the ReplicaSet failing to launch the replacement Pod due to it having insecure options that don't meet the baseline.
-```
-36s         Warning   FailedCreate        replicaset/security-playground-659bcf8f66   (combined from similar events): Error creating: pods "security-playground-659bcf8f66-vdg5n" is forbidden: violates PodSecurity "baseline:v1.25": host namespaces (hostPID=true), privileged (container "security-playground" must not set securityContext.privileged=true)
-```
-
-You can also now try running `~/kubernetes-security-demos/demos/nsenter-node.sh` again and see it gets blocked too.
-
-The baseline security standard is a good balance between allowing the default options in a minimal PodSpec yet blocking the ones that are most likley to lead to security issues. The restricted one goes much further but will likely require changes to the PodSpecs, and maybe the apps, for them to be allowed to deploy.
-
-See the links above to learn more about the labels and the standards you can enforce this way.
+Getting all of your workload namespaces to baseline if not restricted makes a big difference in the security posture of your cluster.
 
 ### Kubebench
-In addition to OPA Gatekeeper, which can block things like the insecure options in your PodSpecs, there are some free opensource tools like [kubebench](https://github.com/aquasecurity/kube-bench) that can scan your cluster's posture against things like the CIS Benchmark. The CIS benchmark covers not just those options but many other aspects of cluster security.
+In addition to PSAs, there are some free opensource tools like [kubebench](https://github.com/aquasecurity/kube-bench) that can scan your cluster's posture against things like the CIS Benchmark. The CIS benchmark covers not just those options but many other aspects of cluster security.
 
 To see this in action:
 1. `cd ~/kubernetes-security-demos/demos`
-1. `kubectl label namespaces default pod-security.kubernetes.io/enforce-` to remove our baseline PSA on the default namespace if it still is on there (this requires privileges to run beyond baseline)
 1. `kubectl apply -f kubebench-job.yaml` to deploy a one-time job to scan your cluster. You could change this job's Kubernetes spec to run regularly if you wanted.
-1. `kubectl logs job/kube-bench` to have a look at the results
+1. `kubectl logs job/kube-bench` to have a look at the results:
+    1. The 5.2.2, 5.2.3, 5.2.7 failures if they had been fixed on security-playground would have prevented the attack. Many other things here would be a good idea to fix too in order to have the ideal security posture.
 
-### Falco
-Finally, we've had a free opensource tool in our cluster all along here watching what we've been up to - [Falco](https://falco.org/). Falco watches streams of data such as the Linux kernel syscalls on all your Nodes, as well as your Kubernetes audit trail, for suspicious behavior and can alert you to it in realtime. This is often referred to as "Runtime threat detection."
+### Falco - detecting threats in real-time
+Finally, we've had a free opensource tool in our cluster all along here watching what we've been up to - [Falco](https://falco.org/). Falco watches streams of data such as the Linux kernel syscalls on all your Nodes, as well as your Kubernetes audit trail, for suspicious behavior and can alert you to it in realtime. This is often referred to as "Runtime Threat Detection."
 
-There are actually two Falcos running - one watching the Linux kernel syscalls on each Node as a DaemonSet and one watching the Kubernetes audit trail as a Deployment. All of their events are aggregated by Falco Sidekick which can fan them out to any number of destinations such as your SIEM, your alerting systems like Pagerduty or your messaging tools like Slack.
+All of their events are aggregated by Falco Sidekick which can fan them out to any number of destinations such as your SIEM, your alerting systems like Pagerduty or your messaging tools like Slack.
 
-1. Open Falcosidekick UI by going to port http://(IP):30282 on your Node and using the username/password of admin/admin
-    1. If you are signed into a microk8s-vm on your Mac or Windows machine, you can run `kubectl get nodes -o wide` to find the IP address to use (the INTERNAL-IP)
+It ships with a variety of sensible rules by default. You can find out more about those in this GitHub Repo - https://github.com/falcosecurity/rules
+
+1. Open Falcosidekick UI by going to port http://(Node IP):30282 on your Node and using the username/password of admin/admin
+    1. You can run `kubectl get nodes -o wide` to find the IP address to use (the INTERNAL-IP)
 1. Note the Rules that have been firing. Many of these things might not be issues but it is good that Falco has recorded them so we can decide if they are or they aren't in our case.
 1. Go to the Events Tab to see the Events in more detail.
     1. First we'll search for `playground` in the search box under the Sources dropdown then scroll to the bottom and increase the Rows per page to 50. Note the following events:
-        1. `Launch Privileged Container` which is one of the parameters that undermines container isolation so we could escape
-        1. `Read sensitive file untrusted` which was when we read /etc/shadow
-        1. `Write below binary dir` when we wrote a file to /bin
-        1. `Launch Package Management Process in Container` when we were apt install-ing things
-        1. `Launch Suspicious Network Tool in Container` when we did our dig against the K8s DNS service discovery
-        1. `Launch Ingress Remote File Copy Tools in Container` where we were curl-ing in our script to start the cyrpto miner
-        1. `Detect crypto miners using the Stratum protocol` (Note that you won't see this on ARM as the cypto miner we're using is Intel-only atm) our script launching a crypto miner
-        1. `The docker client is executed in a container` when we run `crictl` to manipulate the local container runtine circumventing K8s
-        1. Note that in the last docker client we see the psql being run which would tell us that data likely was exfiltrated here
+        1. `Launch Privileged Container` and `Create Privileged Pod` - this is where security-playground was launched with privileges that we were able to exploit to escape the container
+        1. `Read sensitive file untrusted` - this is where we tried to read /etc/shadow
+        1. `Write below binary dir` - this happened whenever we wrote to /bin and /usr/bin (/bin/hello in the container and /usr/bin/crictl on the Node)
+        1. `Launch Package Management Process in Container` - this is where we `apt install`'ed nmap 
+        1. `Drop and execute new binary in container` - this happened whenever we added a new executable at runtime (that wasn't in the image) and ran it (nmap, xmrig, the dpkg to discover our architecture)
+        1. `Launch Suspicious Network Tool in Container` - this is where we ran nmap to perform a network discovery scan
+        1. `The docker client is executed in a container` - this fires not just on the Docker CLI but also other similar tools like crictl and kubectl
+            1. You can see all of the commands we ran as we were breaking out of container including our psql SELECT in the cmdline of these events
+        1. `Launch Ingress Remote File Copy Tools in Container` - this is where we ran wget to get crictl and xmrig
     1. (Optional) remove the search and/or go to the Dashboard tab to look around through the various other Events that Falco has caught during our session
-
-### Running containers as non-root
-
-It is also worth nothing that, in addition to the additional privileges we gave nsenter in the Kubernetes parameters, running as the root user within the container was required for this escape to work. Using Falco to alert on that when it happens (which as you can see it does by default with the rules in the Helm chart), as well as perhaps having OPA Gatekeeper block that so it isn't even possible, you can iterate through your environment to get all of your containers that don't truly need to be root running as non-root to really elevate your security posture.
-
-This change to non-root often requires rebuilding your container with a new Dockerfile. A good example of the difference in Dockerfiles required to do it is [nginx](https://hub.docker.com/_/nginx) vs. [nginx-unprivileged](https://hub.docker.com/r/nginxinc/nginx-unprivileged). By default nginx wants to use port 80 and so runs as root in order to be able to do so. But they also build a version of it that doesn't and uses 8080 instead:
-* nginx Dockerfile that runs as root - https://github.com/nginxinc/docker-nginx/blob/fef51235521d1cdf8b05d8cb1378a526d2abf421/mainline/debian/Dockerfile
-* nginx Dockerfile that creates a nginx user/group (UID and GID 101) and uses that instead - https://github.com/nginxinc/docker-nginx-unprivileged/blob/main/Dockerfile-debian.template
-
-For more on some of the challanges of getting containers to run non-root on Kubernetes - and how to overcome them - this great recent Kubecon talk is worth a watch https://youtu.be/uouH9fsWVIE.
 
 ### (Optional) Scanning containers for vulnerabilities in your pipelines
 
 While there are many tools available for this, Docker has a scan built-in to their CLI. Let's try using that one.
 
-NOTE: This won't run within your microk8s VM and instead needs to run on a machine with Docker installed.
+NOTE: This won't run within your microk8s VM and instead needs to run on a machine with Docker (Linux) or Docker Desktop (Windows or Mac) installed.
 
 1. Clone the repository if you haven't already on the machine running Docker `git clone https://github.com/jasonumiker-sysdig/kubernetes-security-demos.git`
-1. Run `cd ~/kubernetes-security-demos/demos/security-playground` (assuming you cloned it to your home directory)
+1. Run `cd ~/kubernetes-security-demos/demos/security-playground/docker-build-security-playground` (assuming you cloned it to your home directory)
 1. Run `docker build -t security-playground:latest .`
+1. If you are running Docker Desktop then you should already have scout, otherwise run `curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh -s --`
 1. Run `docker scout cves security-playground:latest` as you can see there are many low severity vulnerabilities
 1. Run `docker scout cves security-playground:latest --only-severity "critical, high"` to filter out anything that isn't a critical or a high - and now (as of today) I don't see any.
 
+In this case we haven't even pushed this image to the registry yet and are able to see if it has vulnerabilities/CVEs we need to fix before pushing and deploying it.
 
-## NetworkPolicy Demo
+## Kubernetes Native Firewall (NetworkPolicy) Demo
 
-Now let's look at how NetworkPolicies work and how to isolate network traffic within our cluster(s).
+Now let's look at how NetworkPolicies work and how to isolate network traffic within our cluster(s) - as well as egress traffic to the Internet
 
 We had already deployed a workload in team1 that included a server Pod (hello-server) as well as two client Pods (hello-client-allowed and hello-client-blocked). 
 
 Out of the box all traffic is allowed which you can see as follows:
 1. `kubectl logs deployment/hello-client-allowed -n team1` as you can see it is getting a response from the server
-1. `kubectl logs deployment/hello-client-blocked -n team1` and our 'blocked' Pod is not yet blocked and is getting a response from the server as well
-1. `cd ~/kubernetes-security-demos/demos/network-policy/hello-app`
-1. `kubectl apply -f  hello-client.yaml -n team2` Lets also deploy another set of our client Pods to the team2 namespace
-1. `kubectl logs deployment/hello-client-allowed -n team2` As you can see both the allowed
-1. `kubectl logs deployment/hello-client-blocked -n team2` And the 'blocked' Pods can contact our server pods from other Namespaces by default as well.
-
-There are two common ways to write NetworkPolicies to allow/deny traffic - against labels and against namespaces. And you can actually combine the two now as well. Let's start with namespaces:
+1. `kubectl logs deployment/hello-client-blocked -n team1` and our Pod to be blocked is not yet blocked and is getting a response from the server as well
 1. `cd ~/kubernetes-security-demos/demos/network-policy`
+1. `cat example-curl-networkpolicy.sh` to see an example curl to try to hit hello-server (in Namespace team1) from security-playground (in Namespace team2)
+1. `./example-curl-networkpolicy.sh` to run that and see the response
+
+There are two common ways to write NetworkPolicies to allow/deny traffic dynamically between workloads within the cluster - against labels and against namespaces.
 1. `cat network-policy-namespace.yaml` As you can see here we are saying we are allowing traffic from Pods within the namespace team1 to Pods with the label app set to hello-server (implicitly also in the Namespace team1 where we are deploying the NetworkPolicy).
-1. `kubectl apply -f network-policy-namespace.yaml -n team1` Lets apply that NetworkPolicy
-1. `kubectl logs deployment/hello-client-allowed -n team1` and `kubectl logs deployment/hello-client-blocked -n team1` both of our Pods in team1 can reach the server
-1. `kubectl logs deployment/hello-client-allowed -n team2` and `kubectl logs deployment/hello-client-blocked -n team2` but neither of our Pods in team2 can anymore
+1. `kubectl apply -f network-policy-namespace.yaml` Lets apply that NetworkPolicy
+1. `kubectl logs deployment/hello-client-allowed -n team1` and `kubectl logs deployment/hello-client-blocked -n team1` both of our Pods in team1 can still reach the server
+1. `./example-curl-networkpolicy.sh` but our security-playground in team2 can't any longer (it will time out)
 
 Now let's try it with labels - which is better for restricting traffic within a Namespace to least privilege:
-1. `cd ~/kubernetes-security-demos/demos/network-policy`
 1. `cat network-policy-label.yaml` As you can see here we are saying we are allowing traffic from Pods with the label app set to hello to Pods with the label app set to hello-server. 
-1. `kubectl apply -f network-policy-label.yaml -n team1` Lets apply this NetworkPolicy (overwriting the last one as they have the same name)
+1. `kubectl apply -f network-policy-label.yaml` Lets apply this NetworkPolicy (overwriting the last one as they have the same name)
 1. `kubectl logs deployment/hello-client-blocked -n team1` And now we'll see that our blocked Pod where the app label is not set to hello is now being blocked by the NetworkPolicy
-1. `kubectl logs deployment/hello-client-blocked -n team2` and `kubectl logs deployment/hello-client-allowed -n team2` There was another side effect of this policy too in that it also blocked all traffic from other Namespaces
+1. `./example-curl-networkpolicy.sh` and this also blocked our NetworkPolicy both because it isn't in the same Namespace and it doesn't have the correct label as well.
 
-In order to allow pods with the hello app label from all Namespaces (not just the one the NetworkPolicy is deployed into) you need to add another namespaceSelector with a wildcard allowing that:
-1. `cat network-policy-label-all-namespaces.yaml` As you can see here we added one more line to the from with that {} wildcard for Namespaces. We added this as an AND rather than an OR by including it in the same from section.
-1. `kubectl apply -f network-policy-label-all-namespaces.yaml -n team1`
-1. `kubectl logs deployment/hello-client-allowed -n team2` Now the allowed pods in other namespaces like team2 will work as well
+NetworkPolicies don't just help us control Ingress traffic, though, they can also help us control egress traffic - including preventing access to the Internet.
+
+1. `cat network-policy-deny-egress.yaml` this policy will deny all egress access to all pods in the Namespace it is deployed in.
+    1. Any required egress traffic will need an explicit allow - either added to this policy or in another one applied in the same Namespace
+1. `kubectl apply -f network-policy-deny-egress.yaml -n team2` to apply this to the team2 Namespace (where security-playground lives)
+1. `../security-playground/example-curls.sh` to re-run our example-curls against security-playground. Note how much of that attack is now blocked by not allowing that Pod egress to the Internet it doesn't need.
 
 That was a very basic introduction to NetworkPolicies. There are a number of other good/common examples on this site to explore the topic further - https://github.com/ahmetb/kubernetes-network-policy-recipes
