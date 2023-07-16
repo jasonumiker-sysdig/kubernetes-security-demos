@@ -212,6 +212,7 @@ NOTE: This won't run within your microk8s VM and instead needs to run on a machi
 1. Run `cd ~/kubernetes-security-demos/demos/security-playground/docker-build-security-playground` (assuming you cloned it to your home directory)
 1. Run `docker build -t security-playground:latest .`
 1. If you are running Docker Desktop then you should already have scout, otherwise run `curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh -s --`
+1. Run `docker login` to log into Docker if you are not already
 1. Run `docker scout cves security-playground:latest` as you can see there are many low severity vulnerabilities
 1. Run `docker scout cves security-playground:latest --only-severity "critical, high"` to filter out anything that isn't a critical or a high - and now (as of today) I don't see any.
 
@@ -247,6 +248,7 @@ NetworkPolicies don't just help us control Ingress traffic, though, they can als
 1. `cat network-policy-deny-egress.yaml` this policy will deny all egress access to all pods in the Namespace it is deployed in.
     1. Any required egress traffic will need an explicit allow - either added to this policy or in another one applied in the same Namespace
 1. `kubectl apply -f network-policy-deny-egress.yaml -n team2` to apply this to the team2 Namespace (where security-playground lives)
+1. `kubectl delete --all pods --namespace=team2` - we had already downloaded xmrig to our running container - start a fresh one to properly test the NetworkPolicy
 1. `../security-playground/example-curls.sh` to re-run our example-curls against security-playground. Note how much of that attack is now blocked by not allowing that Pod egress to the Internet it doesn't need.
 
 That was a very basic introduction to NetworkPolicies. There are a number of other good/common examples on this site to explore the topic further - https://github.com/ahmetb/kubernetes-network-policy-recipes
