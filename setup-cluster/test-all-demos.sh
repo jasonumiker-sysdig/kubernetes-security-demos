@@ -117,11 +117,11 @@ echo "--------------------"
 echo "--------------------"
 cat network-policy-deny-egress.yaml
 echo "--------------------"
-kubectl apply -f network-policy-deny-egress.yaml -n team2
+kubectl apply -f network-policy-deny-egress.yaml -n security-playground-restricted
 echo "--------------------"
-kubectl delete --all pods --namespace=team2
-kubectl rollout status deployment security-playground --timeout 300s -n team2
+kubectl delete --all pods --namespace=security-playground-restricted
+kubectl rollout status deployment security-playground --timeout 300s -n security-playground-restricted
 echo "--------------------"
-../security-playground/example-curls.sh
+../security-playground/example-curls-restricted.sh
 echo "--------------------"
 echo "The End."
