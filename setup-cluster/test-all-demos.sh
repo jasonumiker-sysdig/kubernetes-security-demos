@@ -77,6 +77,7 @@ echo "--------------------"
 kubectl describe namespace security-playground-restricted
 echo "--------------------"
 kubectl apply -f security-playground.yaml -n security-playground-restricted
+kubectl delete -f security-playground.yaml -n security-playground-restricted
 echo "--------------------"
 cd ~/kubernetes-security-demos/demos
 kubectl apply -f kubebench-job.yaml

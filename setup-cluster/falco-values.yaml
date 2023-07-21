@@ -2,7 +2,7 @@
 # Default value: kernel module.
 driver:
   enabled: true
-  kind: ebpf
+  kind: modern-bpf
 
 # Enable the collectors used to enrich the events with metadata.
 # Check the values.yaml file for fine-grained options.
