@@ -247,7 +247,7 @@ NetworkPolicies don't just help us control Ingress traffic, though, they can als
 
 1. `cat network-policy-deny-egress.yaml` this policy will deny all egress access to all pods in the Namespace it is deployed in.
     1. Any required egress traffic will need an explicit allow - either added to this policy or in another one applied in the same Namespace
-1. `kubectl apply -f network-policy-deny-egress.yaml -n security-playground-restricted` to apply this to the team2 Namespace (where security-playground lives)
+1. `kubectl apply -f network-policy-deny-egress.yaml -n security-playground-restricted` to apply this to the security-playground-restricted Namespace
 1. `kubectl delete --all pods --namespace=security-playground-restricted` - we had already downloaded xmrig to our running container - start a fresh one to properly test the NetworkPolicy
 1. `../security-playground/example-curls-restricted.sh` to re-run our example-curls against security-playground-restricted. We've now blocked the entire attack - even while still having this critical remote code execution vulnerability in it!
 
