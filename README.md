@@ -252,3 +252,5 @@ NetworkPolicies don't just help us control Ingress traffic, though, they can als
 1. `../security-playground/example-curls-restricted.sh` to re-run our example-curls against security-playground-restricted. We've now blocked the entire attack - even while still having this critical remote code execution vulnerability in it!
 
 That was a very basic introduction to NetworkPolicies. There are a number of other good/common examples on this site to explore the topic further - https://github.com/ahmetb/kubernetes-network-policy-recipes
+
+There is also a great editor for NetworkPolicies at https://editor.networkpolicy.io/
