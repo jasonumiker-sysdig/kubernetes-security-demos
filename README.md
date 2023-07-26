@@ -218,7 +218,7 @@ NOTE: This won't run within your microk8s VM and instead needs to run on a machi
 
 In this case we haven't even pushed this image to the registry yet and are able to see if it has vulnerabilities/CVEs we need to fix before pushing and deploying it.
 
-## Kubernetes Native Firewall (NetworkPolicy) Demo
+## Demo of Kubernetes Native Firewall (NetworkPolicy)
 
 Now let's look at how NetworkPolicies work and how to isolate network traffic within our cluster(s) - as well as egress traffic to the Internet
 
