@@ -1,4 +1,4 @@
-![image](https://github.com/jasonumiker-sysdig/kubernetes-security-demos/assets/105195636/9cb58e4e-cfa0-4d0e-87f6-6a42801427f6)# Kubernetes security demos
+# Kubernetes security demos
 
 This project is intended to provide two things:
 1. Automation to quickly and easily spin up a Kubernetes lab to learn about its security on nearly any machine (Windows, Mac (both Intel and M1/M2), or Linux). It can run in as little as 2 CPUs and 4GB of RAM so it should run on even modest laptops. 
