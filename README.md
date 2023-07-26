@@ -1,4 +1,4 @@
-# Kubernetes security demos
+![image](https://github.com/jasonumiker-sysdig/kubernetes-security-demos/assets/105195636/9cb58e4e-cfa0-4d0e-87f6-6a42801427f6)# Kubernetes security demos
 
 This project is intended to provide two things:
 1. Automation to quickly and easily spin up a Kubernetes lab to learn about its security on nearly any machine (Windows, Mac (both Intel and M1/M2), or Linux). It can run in as little as 2 CPUs and 4GB of RAM so it should run on even modest laptops. 
@@ -85,7 +85,7 @@ Let's explore how this all works:
 
 So, that was a very quick overview of how to configure multi-tenancy of Kubernetes at the control plane level via Namespaces and Roles. And, how much YAML it takes to move away from *'s for the resources and verbs in your Role definitions.
 
-## Demo of common runtime container exploits/escapes - and how to detect and prevent them
+## Demo of how to detect and prevent common runtime container exploits/escapes
 
 We are going to perform a variety of common container/Kubernetes exploits and then show how to block/defend against them as well as detect them if they happen in real-time with Falco.
 
