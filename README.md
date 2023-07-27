@@ -107,6 +107,7 @@ Run the following commands:
 1. `kubectl apply -f security-playground.yaml` - deploy security-playground
 1. `kubectl get all` - We deployed a Deployment (that created a ReplicaSet that created a Pod) as well as a NodePort service exposing security-playground on port 30000 on our Node.
 1. `curl ./example-curls.sh` to see all of the various commands we're going to run to exploit security-playground's remote code execution vulnerability
+1. `kubectl config use-context microk8s` to change our context to the cluster admin so the script can get our Node IP (which requires a ClusterRole)
 1. `./example-curls.sh` to run all of our example exploits
 
 Watch the output scroll by to see this from the attacker's perspective.
@@ -135,7 +136,6 @@ The [security-playground-restricted.yaml](demos/security-playground/security-pla
 Run the following:
 1. `cd ~/kubernetes-security-demos/demos/security-playground`
 1. `cat security-playground-restricted.yaml`
-1. `kubectl config use-context microk8s` to change our context to the cluster admin that can create/use other Namespaces
 1. `kubectl apply -f security-playground-restricted.yaml`
 1. `./example-curls-restricted.sh`
 
