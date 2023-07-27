@@ -135,6 +135,7 @@ The [security-playground-restricted.yaml](demos/security-playground/security-pla
 Run the following:
 1. `cd ~/kubernetes-security-demos/demos/security-playground`
 1. `cat security-playground-restricted.yaml`
+1. `kubectl config use-context microk8s` to change our context to the cluster admin that can create/use other Namespaces
 1. `kubectl apply -f security-playground-restricted.yaml`
 1. `./example-curls-restricted.sh`
 
