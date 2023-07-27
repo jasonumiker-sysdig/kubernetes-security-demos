@@ -33,7 +33,7 @@ spec:
           type: RuntimeDefault        
       containers:
         - name: security-playground-unprivileged
-          image: public.ecr.aws/m9h2b5e7/security-playground-unprivileged:110623
+          image: public.ecr.aws/m9h2b5e7/security-playground-unprivileged:270723
           ports:
             - name: http
               containerPort: 8080

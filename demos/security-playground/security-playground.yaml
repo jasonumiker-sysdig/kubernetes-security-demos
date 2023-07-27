@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: postgres-sakila
-        image: public.ecr.aws/m9h2b5e7/postgres-sakila:110623
+        image: public.ecr.aws/m9h2b5e7/postgres-sakila:270723
         ports:
         - containerPort: 5432
         env:
@@ -49,7 +49,7 @@ spec:
       hostPID: true
       containers:
         - name: security-playground
-          image: public.ecr.aws/m9h2b5e7/security-playground:110623
+          image: public.ecr.aws/m9h2b5e7/security-playground:270723
           ports:
             - name: http
               containerPort: 8080
