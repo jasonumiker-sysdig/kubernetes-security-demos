@@ -29,7 +29,7 @@ microk8s.config | cat - > /root/.kube/config
 # Install Falco
 helm repo add falcosecurity https://falcosecurity.github.io/charts
 helm repo update
-helm install falco falcosecurity/falco --namespace falco --create-namespace -f falco-values.yaml --version 3.4.0 --kubeconfig /root/.kube/config
+helm install falco falcosecurity/falco --namespace falco --create-namespace -f falco-values.yaml --version 3.6.0 --kubeconfig /root/.kube/config
 
 # Set up multi-tenancy
 # Create token for Jane to access team1
