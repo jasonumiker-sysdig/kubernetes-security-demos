@@ -2,14 +2,18 @@
 # NOTE: Run this with sudo inside microk8s-vm
 
 # Install microk8s
-snap install microk8s --channel=1.27/stable --classic
+snap install microk8s --channel=1.28/stable --classic
 
 # Enable CoreDNS, RBAC, hostpath-storage, ingress
-microk8s enable dns rbac hostpath-storage metrics-server
+microk8s enable dns 
+microk8s enable hostpath-storage 
+#microk8s enable observability
+microk8s enable community
+microk8s enable trivy
 microk8s status --wait-ready
 
 # Install kubectl in microk8s-vm
-snap install kubectl --channel 1.27/stable --classic
+snap install kubectl --channel 1.28/stable --classic
 
 # Install helm in microk8s-vm
 snap install helm --classic
@@ -17,9 +21,9 @@ snap install helm --classic
 # Install crictl in microk8s-vm
 # Now installing this through example-curls.sh instead
 #ARCH=$(dpkg --print-architecture)
-#wget -q https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.27.1/crictl-v1.27.1-linux-$ARCH.tar.gz
-#tar zxvf crictl-v1.27.1-linux-$ARCH.tar.gz -C /usr/local/bin
-#rm -f crictl-v1.27.1-linux-$ARCH.tar.gz
+#wget -q https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.28.0/crictl-v1.28.0-linux-$ARCH.tar.gz
+#tar zxvf crictl-v1.28.0-linux-$ARCH.tar.gz -C /usr/local/bin
+#rm -f crictl-v1.28.0-linux-$ARCH.tar.gz
 echo "runtime-endpoint: unix:///var/snap/microk8s/common/run/containerd.sock" > /etc/crictl.yaml
 
 # Set up the kubeconfig
@@ -29,7 +33,7 @@ microk8s.config | cat - > /root/.kube/config
 # Install Falco
 helm repo add falcosecurity https://falcosecurity.github.io/charts
 helm repo update
-helm install falco falcosecurity/falco --namespace falco --create-namespace -f falco-values.yaml --version 3.6.0 --kubeconfig /root/.kube/config
+helm install falco falcosecurity/falco --namespace falco --create-namespace -f falco-values.yaml --version 3.7.1 --kubeconfig /root/.kube/config
 
 # Set up multi-tenancy
 # Create token for Jane to access team1
