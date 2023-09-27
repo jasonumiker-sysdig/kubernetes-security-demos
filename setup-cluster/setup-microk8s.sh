@@ -6,7 +6,8 @@ snap install microk8s --channel=1.27/stable --classic
 
 # Enable CoreDNS, RBAC, hostpath-storage, ingress
 microk8s enable dns 
-microk8s enable hostpath-storage 
+microk8s enable hostpath-storage
+microk8s enable rbac
 #microk8s enable observability
 microk8s enable community
 microk8s enable trivy
