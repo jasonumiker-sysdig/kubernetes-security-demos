@@ -2,7 +2,7 @@
 # NOTE: Run this with sudo inside microk8s-vm
 
 # Install microk8s
-snap install microk8s --channel=1.27/stable --classic
+snap install microk8s --channel=1.29/stable --classic
 
 # Enable CoreDNS, RBAC, hostpath-storage, ingress
 microk8s enable dns 
@@ -11,10 +11,11 @@ microk8s enable rbac
 #microk8s enable observability
 microk8s enable community
 microk8s enable trivy
+microk8s enable falco
 microk8s status --wait-ready
 
 # Install kubectl in microk8s-vm
-snap install kubectl --channel 1.27/stable --classic
+snap install kubectl --channel 1.29/stable --classic
 
 # Install helm in microk8s-vm
 snap install helm --classic
@@ -32,9 +33,9 @@ echo "runtime-endpoint: unix:///var/snap/microk8s/common/run/containerd.sock" > 
 microk8s.config | cat - > /root/.kube/config
 
 # Install Falco
-helm repo add falcosecurity https://falcosecurity.github.io/charts
-helm repo update
-helm install falco falcosecurity/falco --namespace falco --create-namespace -f falco-values.yaml --version 3.7.1 --kubeconfig /root/.kube/config
+#helm repo add falcosecurity https://falcosecurity.github.io/charts
+#helm repo update
+#helm install falco falcosecurity/falco --namespace falco --create-namespace -f falco-values.yaml --version 3.7.1 --kubeconfig /root/.kube/config
 
 # Set up multi-tenancy
 # Create token for Jane to access team1
@@ -66,23 +67,23 @@ cp /root/.kube/config /home/ubuntu/.kube/config
 chown ubuntu:ubuntu -R /home/ubuntu/.kube
 
 # Enable auditing
-mkdir /var/snap/microk8s/common/var/lib/k8s_audit
-AGENT_SERVICE_CLUSTERIP=$(kubectl get service falco-k8saudit-webhook -o=jsonpath={.spec.clusterIP} -n falco) envsubst < webhook-config.yaml.in > webhook-config.yaml
-cp ./webhook-config.yaml /var/snap/microk8s/common/var/lib/k8s_audit
-cp ./audit-policy.yaml /var/snap/microk8s/common/var/lib/k8s_audit
-cat /var/snap/microk8s/current/args/kube-apiserver > kube-apiserver
-cat << EOF >> kube-apiserver
---audit-log-path=/var/snap/microk8s/common/var/lib/k8s_audit/k8s_audit_events.log
---audit-policy-file=/var/snap/microk8s/common/var/lib/k8s_audit/audit-policy.yaml
---audit-log-maxbackup=1
---audit-log-maxsize=10
---audit-webhook-config-file=/var/snap/microk8s/common/var/lib/k8s_audit/webhook-config.yaml
---audit-webhook-batch-max-wait=5s
-EOF
-mv /var/snap/microk8s/current/args/kube-apiserver /var/snap/microk8s/current/args/kube-apiserver-orig
-cp ./kube-apiserver /var/snap/microk8s/current/args/
-chown root:microk8s /var/snap/microk8s/current/args/kube-apiserver
-microk8s stop
-microk8s start
-sleep 30
-kubectl rollout status daemonset falco -n falco --timeout 300s
+#mkdir /var/snap/microk8s/common/var/lib/k8s_audit
+#AGENT_SERVICE_CLUSTERIP=$(kubectl get service falco-k8saudit-webhook -o=jsonpath={.spec.clusterIP} -n falco) envsubst < webhook-config.yaml.in > webhook-config.yaml
+#cp ./webhook-config.yaml /var/snap/microk8s/common/var/lib/k8s_audit
+#cp ./audit-policy.yaml /var/snap/microk8s/common/var/lib/k8s_audit
+#cat /var/snap/microk8s/current/args/kube-apiserver > kube-apiserver
+#cat << EOF >> kube-apiserver
+#--audit-log-path=/var/snap/microk8s/common/var/lib/k8s_audit/k8s_audit_events.log
+#--audit-policy-file=/var/snap/microk8s/common/var/lib/k8s_audit/audit-policy.yaml
+#--audit-log-maxbackup=1
+#--audit-log-maxsize=10
+#--audit-webhook-config-file=/var/snap/microk8s/common/var/lib/k8s_audit/webhook-config.yaml
+#--audit-webhook-batch-max-wait=5s
+#EOF
+#mv /var/snap/microk8s/current/args/kube-apiserver /var/snap/microk8s/current/args/kube-apiserver-orig
+#cp ./kube-apiserver /var/snap/microk8s/current/args/
+#chown root:microk8s /var/snap/microk8s/current/args/kube-apiserver
+#microk8s stop
+#microk8s start
+#sleep 30
+#kubectl rollout status daemonset falco -n falco --timeout 300s
